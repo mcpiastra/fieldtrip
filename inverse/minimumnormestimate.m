@@ -19,10 +19,9 @@ function [dipout] = minimumnormestimate(dip, grad, headmodel, dat, varargin)
 %   'prewhiten'        = 'no' or 'yes', prewhiten the leadfield matrix with the noise covariance matrix C
 %   'scalesourcecov'   = 'no' or 'yes', scale the source covariance matrix R such that trace(leadfield*R*leadfield')/trace(C)=1
 %
-% Note that leadfield normalization (depth regularisation) should be done
-% by scaling the leadfields outside this function, e.g. in
-% prepare_leadfield. Note also that with precomputed leadfields the
-% normalization parameters will not have an effect.
+% Note that leadfield normalization (depth regularisation) should be done by scaling
+% the leadfields outside this function, e.g. in FT_PREPARE_LEADFIELD. Note also that
+% with precomputed leadfields the normalization parameters will not have an effect.
 %
 % This implements
 % * Dale AM, Liu AK, Fischl B, Buckner RL, Belliveau JW, Lewine JD,
@@ -88,7 +87,7 @@ end
 % find the dipole positions that are inside/outside the brain
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~isfield(dip, 'inside')
-  dip.inside = ft_inside_vol(dip.pos, headmodel);
+  dip.inside = ft_inside_headmodel(dip.pos, headmodel);
 end
 
 if any(dip.inside>1)

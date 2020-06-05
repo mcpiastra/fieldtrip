@@ -1,8 +1,7 @@
 function test_old_fixcsd
 
-% MEM 1gb
+% MEM 4gb
 % WALLTIME 00:10:00
-
 
 % this script tests the functionality of fixcsd/fixcoh in checkdata
 
@@ -43,7 +42,7 @@ cfg = [];
 cfg.method = 'coh';
 cfg.channelcmb = channelcmb(1,:);
 coh = ft_connectivityanalysis(cfg, freq);
-coh2 = checkdata(coh, 'cmbrepresentation', 'sparse');
+coh2 = ft_checkdata(coh, 'cmbrepresentation', 'sparse');
 
 cfg = [];
 cfg.method = 'granger';

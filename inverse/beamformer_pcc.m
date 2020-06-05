@@ -79,6 +79,9 @@ keepfilter     = ft_getopt(varargin, 'keepfilter',    'no');
 keepleadfield  = ft_getopt(varargin, 'keepleadfield', 'no');
 keepmom        = ft_getopt(varargin, 'keepmom',       'yes');
 lambda         = ft_getopt(varargin, 'lambda',        0);
+kappa          = ft_getopt(varargin, 'kappa',         []);
+tol            = ft_getopt(varargin, 'tol',           []);
+invmethod      = ft_getopt(varargin, 'invmethod',     []);
 projectnoise   = ft_getopt(varargin, 'projectnoise',  'yes');
 realfilter     = ft_getopt(varargin, 'realfilter',    'yes');
 fixedori       = ft_getopt(varargin, 'fixedori',      'no');
@@ -93,13 +96,13 @@ projectnoise   = strcmp(projectnoise,  'yes');
 realfilter     = strcmp(realfilter,    'yes');
 
 % the postprocessing of the pcc beamformer always requires the csd matrix
-keepcsd = 1;
+keepcsd = true;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % find the dipole positions that are inside/outside the brain
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~isfield(dip, 'inside')
-  dip.inside = ft_inside_vol(dip.pos, headmodel);
+  dip.inside = ft_inside_headmodel(dip.pos, headmodel);
 end
 
 if any(dip.inside>1)
@@ -109,6 +112,11 @@ if any(dip.inside>1)
   dip.inside = tmp;
 end
 
+% flags to avoid calling isfield repeatedly in the loop over grid positions (saves a lot of time)
+hasmom        = isfield(dip, 'mom');
+hasleadfield  = isfield(dip, 'leadfield');
+hasfilter     = isfield(dip, 'filter');
+
 % keep the original details on inside and outside positions
 originside = dip.inside;
 origpos    = dip.pos;
@@ -116,18 +124,17 @@ origpos    = dip.pos;
 % select only the dipole positions inside the brain for scanning
 dip.pos    = dip.pos(originside,:);
 dip.inside = true(size(dip.pos,1),1);
-if isfield(dip, 'mom')
+
+if hasmom
   dip.mom = dip.mom(:, originside);
 end
-needleadfield = 1;
-if isfield(dip, 'leadfield')
-  fprintf('using precomputed leadfields\n');
+if hasleadfield
+  ft_info('using precomputed leadfields\n');
   dip.leadfield = dip.leadfield(originside);
 end
-if isfield(dip, 'filter')
-  fprintf('using precomputed filters\n');
+if hasfilter
+  ft_info('using precomputed filters\n');
   dip.filter = dip.filter(originside);
-  needleadfield = 0;
 end
 
 if ~isempty(refdip)
@@ -143,7 +150,7 @@ else
 end
 
 % sanity check
-if (~isempty(rf) || ~isempty(sf)) && isfield(dip, 'filter')
+if (~isempty(rf) || ~isempty(sf)) && hasfilter
   ft_error('precomputed filters cannot be used in combination with a refdip or supdip')
 end
 
@@ -164,53 +171,60 @@ rankCmeg = rank(Cmeg);
 if ~isempty(lambda) && ischar(lambda) && lambda(end)=='%'
   ratio = sscanf(lambda, '%f%%');
   ratio = ratio/100;
-  lambda = ratio * trace(Cmeg)/size(Cmeg,1);
+  tmplambda = ratio * trace(Cmeg)/size(Cmeg,1);
+elseif ~isempty(lambda)
+  tmplambda = lambda;
+else
+  tmplambda = 0;
 end
 
 if projectnoise
   % estimate the noise level in the covariance matrix by the smallest singular (non-zero) value
-    noise = svd(Cmeg);
-    noise = noise(rankCmeg);
-    % estimated noise floor is equal to or higher than lambda
-    noise = max(noise, lambda);
+  noise = svd(Cmeg);
+  noise = noise(rankCmeg);
+  % estimated noise floor is equal to or higher than a numeric lambda
+  noise = max(noise, tmplambda);
 end
 
 if realfilter
   % construct the filter only on the real part of the CSD matrix, i.e. filter is real
-  invCmeg = pinv(real(Cmeg) + lambda*eye(Nmegchan));
+  invCmeg = ft_inv(real(Cmeg), 'lambda', lambda, 'kappa', kappa, 'tolerance', tol, 'method', invmethod);
 else
   % construct the filter on the complex CSD matrix, i.e. filter contains imaginary component as well
   % this results in a phase rotation of the channel data if the filter is applied to the data
-  invCmeg = pinv(Cmeg + lambda*eye(Nmegchan));
+  invCmeg = ft_inv(Cmeg, 'lambda', lambda, 'kappa', kappa, 'tolerance', tol, 'method', invmethod);
 end
 
 % start the scanning with the proper metric
 ft_progress('init', feedback, 'beaming sources');
 
 for i=1:size(dip.pos,1)
-  if needleadfield
-    if isfield(dip, 'leadfield') && isfield(dip, 'mom') && size(dip.mom, 1)==size(dip.leadfield{i}, 2)
-      % reuse the leadfield that was previously computed and project
-      lf = dip.leadfield{i} * dip.mom(:,i);
-    elseif  isfield(dip, 'leadfield') &&  isfield(dip, 'mom')
-      % reuse the leadfield that was previously computed but don't project
-      lf = dip.leadfield{i};
-    elseif isfield(dip, 'leadfield') && ~isfield(dip, 'mom'),
-      % reuse the leadfield that was previously computed
-      lf = dip.leadfield{i};
-    elseif ~isfield(dip, 'leadfield') && isfield(dip, 'mom')
-      % compute the leadfield for a fixed dipole orientation
-      lf = ft_compute_leadfield(dip.pos(i,:), grad, headmodel, 'reducerank', reducerank, 'normalize', normalize, 'normalizeparam', normalizeparam) * dip.mom(:,i);
-    else
-      % compute the leadfield
-      lf = ft_compute_leadfield(dip.pos(i,:), grad, headmodel, 'reducerank', reducerank, 'normalize', normalize, 'normalizeparam', normalizeparam);
-    end
-    
+  if hasfilter
+    % precomputed filter is provided, the leadfield is not needed
+  elseif hasleadfield && isfield(dip, 'mom') && size(dip.mom, 1)==size(dip.leadfield{i}, 2)
+    % reuse the leadfield that was previously computed and project
+    lf = dip.leadfield{i} * dip.mom(:,i);
+  elseif  hasleadfield &&  isfield(dip, 'mom')
+    % reuse the leadfield that was previously computed but don't project
+    lf = dip.leadfield{i};
+  elseif hasleadfield && ~isfield(dip, 'mom')
+    % reuse the leadfield that was previously computed
+    lf = dip.leadfield{i};
+  elseif ~hasleadfield && isfield(dip, 'mom')
+    % compute the leadfield for a fixed dipole orientation
+    lf = ft_compute_leadfield(dip.pos(i,:), grad, headmodel, 'reducerank', reducerank, 'normalize', normalize, 'normalizeparam', normalizeparam) * dip.mom(:,i);
+  else
+    % compute the leadfield
+    lf = ft_compute_leadfield(dip.pos(i,:), grad, headmodel, 'reducerank', reducerank, 'normalize', normalize, 'normalizeparam', normalizeparam);
+  end
+  
+  % determine the dimensionality of the source (usually 3, or 6 for a dipole pair)
+  if hasfilter
+    sourcedim = size(dip.filter{i},1);
+  else
     % concatenate scandip, refdip and supdip
     lfa = [lf rf sf];
-    Ndip = size(lfa,2);
-  else
-    Ndip = size(dip.filter{i},1);
+    sourcedim = size(lfa,2);
   end
   
   if fixedori
@@ -218,18 +232,18 @@ for i=1:size(dip.pos,1)
       % compute the leadfield for the optimal dipole orientation
       % subsequently the leadfield for only that dipole orientation will
       % be used for the final filter computation
-      if isfield(dip, 'filter') && size(dip.filter{i},1)==1
+      if hasfilter && size(dip.filter{i},1)==1
         % nothing to do
         ft_warning('Ignoring ''fixedori''. The fixedori option is supported only if there is ONE dipole for location.')
       else
-        if isfield(dip, 'filter') && size(dip.filter{i},1)~=1
+        if hasfilter && size(dip.filter{i},1)~=1
           filt = dip.filter{i};
         else
           filt = pinv(lfa' * invCmeg * lfa) * lfa' * invCmeg;
         end
         [u, s, v] = svd(real(filt * Cmeg * ctranspose(filt)));
         maxpowori = u(:,1);
-        if numel(s)>1, 
+        if numel(s)>1
           eta = s(1,1)./s(2,2);
         else
           eta = nan;
@@ -238,14 +252,14 @@ for i=1:size(dip.pos,1)
         dipout.ori{i} = maxpowori;
         dipout.eta(i) = eta;
         % update the number of dipole components
-        Ndip = size(lfa,2);
+        sourcedim = size(lfa,2);
       end
     else
       ft_warning('Ignoring ''fixedori''. The fixedori option is supported only if there is ONE dipole for location.')
     end
   end
   
-  if isfield(dip, 'filter')
+  if hasfilter
     % use the provided filter
     filt = dip.filter{i};
   else
@@ -254,11 +268,11 @@ for i=1:size(dip.pos,1)
   end
   
   % concatenate the source filters with the channel filters
-  filtn = zeros(Ndip+Nrefchan+Nsupchan, Nmegchan+Nrefchan+Nsupchan);
+  filtn = zeros(sourcedim+Nrefchan+Nsupchan, Nmegchan+Nrefchan+Nsupchan);
   % this part of the filter relates to the sources
-  filtn(1:Ndip,megchan) = filt;
+  filtn(1:sourcedim,megchan) = filt;
   % this part of the filter relates to the channels
-  filtn((Ndip+1):end,setdiff(1:(Nmegchan+Nrefchan+Nsupchan), megchan)) = eye(Nrefchan+Nsupchan);
+  filtn((sourcedim+1):end,setdiff(1:(Nmegchan+Nrefchan+Nsupchan), megchan)) = eye(Nrefchan+Nsupchan);
   filt = filtn;
   clear filtn
   
