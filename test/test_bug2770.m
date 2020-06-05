@@ -1,9 +1,9 @@
 function test_bug2770
 
 % WALLTIME 00:10:00
-% MEM 2gb
+% MEM 1500mb
 
-% DEPENDENCY eeglab2fieldtrip
+% TEST eeglab2fieldtrip
 
 filename = dccnpath('/home/common/matlab/fieldtrip/data/test/bug2770/164_MIST_prac.mat');
 

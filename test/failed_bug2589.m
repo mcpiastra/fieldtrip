@@ -2,7 +2,9 @@ function failed_bug2589
 
 % WALLTIME 00:10:00
 % MEM 1gb
-% DEPENDENCY ft_selectdata getdimord
+
+% TEST test_bug2589
+% TEST ft_selectdata getdimord
 
 data = [];
 for i=1:2

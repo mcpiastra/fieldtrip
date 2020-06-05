@@ -1,9 +1,9 @@
 function test_bug1357
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_multiplotTFR ft_singleplotTFR ft_singleplotTFR ft_singleplotTFR
+% TEST ft_multiplotTFR ft_singleplotTFR ft_singleplotTFR ft_singleplotTFR
 
 cfg = [];
 cfg.layout = 'CTF151.lay';

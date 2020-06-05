@@ -1,9 +1,14 @@
 function test_bug1599(datainfo, version)
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_sourceanalysis beamformer_lcmv
+% TEST ft_sourceanalysis beamformer_lcmv
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
+ft_default.feedback = 'no';
 
 % fixedori is set correctly in beamformer_lcmv, the only problem is
 % that sourceanalysis seems to not bother about this when using a
@@ -30,24 +35,28 @@ vol.r = 12;
 vol.unit = 'cm';
 vol.type = 'singlesphere';
 
-sourcemodel = [];
-sourcemodel.resolution = 2.5;
+grid = [];
+grid.resolution = 2.5;
+grid.xgrid = 'auto';
+grid.ygrid = 'auto';
+grid.zgrid = 'auto';
 
 % compute filter
 cfg                 = [];
-cfg.headmodel       = vol;
-cfg.sourcemodel     = sourcemodel;
+cfg.vol             = vol;
+cfg.grid            = grid;
 cfg.method          = 'lcmv';
 cfg.lcmv.keepfilter = 'yes';
-cfg.lcmv.fixedori   = 'no'; 
+cfg.lcmv.fixedori   ='no'; 
 filter              = ft_sourceanalysis(cfg, timelock); 
 
 cfg               = [];
-cfg.headmodel     = vol;
+cfg.vol           = vol;
+cfg.grid          = grid;
 cfg.method        = 'lcmv';
-% cfg.rawtrial    = 'yes';
-cfg.sourcemodel   = keepfields(filter, {'pos', 'filter', 'filterdimord', 'label'});
-cfg.lcmv.fixedori = 'yes'; 
+% cfg.rawtrial      = 'yes';
+cfg.grid.filter   = filter.avg.filter;
+cfg.lcmv.fixedori ='yes'; 
 oriyes            = ft_sourceanalysis(cfg, timelock); 
 cfg.lcmv.fixedori = 'no'; 
 orino             = ft_sourceanalysis(cfg, timelock); 

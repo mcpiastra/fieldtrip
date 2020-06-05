@@ -35,18 +35,16 @@ ver = ori + 0.7*ver;            % location from center of head
 if feedback
   figure
   ft_plot_mesh(struct('pos', pnt, 'tri', dhk), 'edgecolor', 'none', 'facecolor', 'skin')
-  lighting gouraud
-  material dull
-  lightangle(0, 90);
-  alpha 0.9
+  alpha 0.5
   ft_plot_mesh(nas, 'vertexsize', 30)
   ft_plot_mesh(lpa, 'vertexsize', 30)
   ft_plot_mesh(ini, 'vertexsize', 30)
   ft_plot_mesh(rpa, 'vertexsize', 30)
   ft_plot_mesh(ver, 'vertexsize', 30)
+  axis equal
+  axis vis3d
   grid on
   hold on
-  view([1 1 0.5])
 end
 
 
@@ -876,8 +874,5 @@ elc = elc(sel, :);
 lab = lab(sel);
 
 if feedback
-  elec = [];
-  elec.elecpos = elc;
-  elec.label = lab;
-  ft_plot_sens(elec)
+  ft_plot_mesh(elc, 'vertexsize', 10, 'vertexcolor', 'b')
 end

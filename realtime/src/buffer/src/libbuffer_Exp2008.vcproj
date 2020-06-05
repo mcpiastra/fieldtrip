@@ -178,7 +178,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\swap.h"
+				RelativePath=".\swapbytes.h"
 				>
 			</File>
 		</Filter>
@@ -210,11 +210,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\print.c"
+				RelativePath=".\printstruct.c"
 				>
 			</File>
 			<File
-				RelativePath=".\swap.c"
+				RelativePath=".\swapbytes.c"
 				>
 			</File>
 			<File
@@ -234,7 +234,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\endian.c"
+				RelativePath=".\endianutil.c"
 				>
 			</File>
 		</Filter>

@@ -39,7 +39,7 @@ function write_stl(filename, pnt, tri, nrm)
 %   endfacet
 %   ...
 
-fid = fopen_or_error(filename, 'wb');
+fid = fopen(filename, 'wb');
 
 ntri = size(tri,1);
 fprintf(fid, 'solid unknown\n');

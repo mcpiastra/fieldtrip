@@ -13,7 +13,7 @@ function [type, dimord] = ft_datatype(data, desired)
 % FT_DATATYPE_TIMELOCK, FT_DATATYPE_DIP, FT_DATATYPE_HEADMODEL,
 % FT_DATATYPE_RAW, FT_DATATYPE_SENS, FT_DATATYPE_SPIKE, FT_DATATYPE_VOLUME
 
-% Copyright (C) 2008-2019, Robert Oostenveld
+% Copyright (C) 2008-2015, Robert Oostenveld
 %
 % This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
@@ -90,14 +90,14 @@ elseif israw
 elseif iscomp
   type = 'comp';
 elseif isfreqmvar
-  % freqmvar should go before freq
+  % freqmvar should conditionally go before freq, otherwise the returned ft_datatype will be freq in the case of frequency mvar data
   type = 'freqmvar';
 elseif isfreq
   type = 'freq';
 elseif ismvar
   type = 'mvar';
 elseif isdip
-  % this should go before timelock
+  % dip should conditionally go before timelock, otherwise the ft_datatype will be timelock
   type = 'dip';
 elseif istimelock
   type = 'timelock';
@@ -107,9 +107,6 @@ elseif isvolume
   type = 'volume';
 elseif ismesh && isparcellation
   type = 'mesh+label';
-elseif islayout
-  % this should go before source
-  type = 'layout';
 elseif issource && isparcellation
   type = 'source+label';
 elseif issource && ismesh
@@ -131,6 +128,8 @@ elseif ismontage
   type = 'montage';
 elseif isevent
   type = 'event';
+elseif islayout
+  type = 'layout';
 else
   type = 'unknown';
 end

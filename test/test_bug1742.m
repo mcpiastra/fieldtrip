@@ -1,9 +1,9 @@
 function test_bug1742
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY qsubcellfun fexec
+% TEST qsubcellfun fexec
 
 [ftver, ftpath] = ft_version;
 addpath(fullfile(ftpath,'qsub'));

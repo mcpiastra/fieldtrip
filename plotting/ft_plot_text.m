@@ -54,7 +54,7 @@ function [varargout] = ft_plot_text(X, Y, str, varargin)
 %
 % $Id$
 
-ws = ft_warning('on', 'MATLAB:divideByZero');
+ws = warning('on', 'MATLAB:divideByZero');
 
 % get the optional input arguments
 hpos                = ft_getopt(varargin, 'hpos');
@@ -87,14 +87,15 @@ if isempty(hlim) && isempty(vlim) && isempty(hpos) && isempty(vpos) && isempty(h
   
 else
   % use the full implementation
+  abc = axis;
   if isempty(hlim)
     ft_warning('use hlim/vlim when specifying local axes');
-    hlim = get(gca, 'XLim');
+    hlim = abc([1 2]);
   end
   
   if isempty(vlim)
     ft_warning('use hlim/vlim when specifying local axes');
-    vlim = get(gca, 'YLim');
+    vlim = abc([3 4]);
   end
   
   if isempty(hpos)
@@ -142,4 +143,4 @@ if nargout == 1
   varargout{1} = h;
 end
 
-ft_warning(ws); % revert to original state
+warning(ws); % revert to original state

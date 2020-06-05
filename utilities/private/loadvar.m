@@ -1,8 +1,6 @@
 function value = loadvar(filename, varname)
 
 % LOADVAR is a helper function for cfg.inputfile
-%
-% See also SAVEVAR
 
 % Copyright (C) 2010, Robert Oostenveld
 %
@@ -11,10 +9,10 @@ function value = loadvar(filename, varname)
 assert(ischar(filename), 'file name should be a string');
 
 if nargin<2
-  ft_info('reading variable from file ''%s''\n', filename);
+  fprintf('reading variable from file ''%s''\n', filename);
 else
   assert(ischar(varname), 'variable name should be a string');
-  ft_info('reading ''%s'' from file ''%s''\n', varname, filename);
+  fprintf('reading ''%s'' from file ''%s''\n', varname, filename);
 end
 
 % note that this sometimes fails, returning an empty var

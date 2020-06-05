@@ -31,19 +31,18 @@ function [matrix, extra] = read_mat(fn)
 %
 % $Id$
 
-try
-f=fopen_or_error(fn);
-catch err
-  fprintf('\nCannot open file: %s\n\n', err.message);
+f=fopen(fn);
+if (f==-1)
+  fprintf('\nCannot open %s\n\n', fn);
   result=0;
   extra='';
-  return
+  return;
 end
 
 [N,nr]=fscanf(f,'%d',2);
 if (nr~=2)
   fclose(f);
-  f=fopen_or_error(fn);
+  f=fopen(fn);
   [magic ,nr]=fread(f,8,'char');
   if (char(magic')==';;mbfmat')
     fread(f,1,'char');
@@ -55,7 +54,7 @@ if (nr~=2)
     M=fread(f,[N(2),N(1)],'double');
   else
     fclose(f);
-    f=fopen_or_error(fn);
+    f=fopen(fn);
     N=fread(f,2,'long');
     M=fread(f,[N(2),N(1)],'float');
   end

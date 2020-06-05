@@ -2,11 +2,17 @@ function failed_ft_datatype_source
 
 % WALLTIME 24:00:00
 % MEM 4gb
-% DEPENDENCY ft_sourcegrandaverage ft_selectdata ft_selectdata_new ft_datatype_source ft_math
+
+% TEST test_bug2185
+% TEST ft_sourcegrandaverage ft_selectdata ft_selectdata_new ft_datatype_source ft_math
+
+global ft_default
+ft_default = [];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% test the historical dirlists
 % the style of this is also used in test_ft_analysisprotocol and test_ft_datatype
+
 
 p = dccnpath('/home/common/matlab/fieldtrip/data/test/');
 d = dir(fullfile(p, '20*'));

@@ -3,8 +3,14 @@ function failed_old_connectivityanalysis_sourcedata
 % MEM 1gb
 % WALLTIME 00:10:00
 
-% this script tests the functionality of connectivityanalysis with respect
-% to source data
+% TEST test_old_connectivityanalysis_sourcedata
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
+
+%this script tests the functionality of connectivityanalysis with respect
+%to source data
 
 %-------------------------------------
 %generate data
@@ -21,7 +27,7 @@ for k = 1:10
 end
 
 %create grad-structure and add to data
-[pnt,tri] = mesh_sphere(162);
+[pnt,tri] = icosahedron162;
 nrm       = normals(pnt, tri, 'vertex');
 pnt       = pnt.*12;
 [srt,ind] = sort(pnt(:,3),'descend');
@@ -42,8 +48,8 @@ vol.r = 8;
 
 %prepare leadfields and grid
 cfg                 = [];
-cfg.sourcemodel.resolution = 1.5;
-cfg.headmodel       = vol;
+cfg.grid.resolution = 1.5;
+cfg.vol             = vol;
 cfg.grad            = grad;
 grid                = ft_prepare_leadfield(cfg);
 
@@ -87,7 +93,7 @@ cfgsd            = [];
 cfgsd.projectmom = 'yes';
 sd               = ft_sourcedescriptives(cfgsd, source);
 
-cfgs.sourcemodel.filter = sd.avg.filter;
+cfgs.grid.filter = sd.avg.filter;
 cfgs.method      = 'pcc';
 cfgs.keepmom     = 'yes';
 
@@ -100,7 +106,7 @@ else
 end
 for k = 1:numel(insidevec)
   kk = insidevec(k);
-  cfgs.sourcemodel.leadfield{kk} = sd.leadfield{kk}*sd.avg.ori{kk};
+  cfgs.grid.leadfield{kk} = sd.leadfield{kk}*sd.avg.ori{kk};
 end
 spcc  = ft_sourceanalysis(cfgs, freq);
 spcc  = checkdata(spcc, 'sourcerepresentation', 'new');
@@ -110,4 +116,4 @@ cfgc = [];
 cfgc.method = 'coh';
 cfgc.refindx = 1:numel(spccs.inside);
 scoh  = ft_connectivityanalysis(cfgc, spccs);
-scohf = source2full(scoh);
+scohf = source2full(scoh); 

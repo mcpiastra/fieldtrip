@@ -1,12 +1,12 @@
 function test_headmodel_concentricspheres
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_headmodel_concentricspheres ft_prepare_vol_sens ft_compute_leadfield
+% TEST ft_headmodel_concentricspheres ft_prepare_vol_sens ft_compute_leadfield
 
 % generate some random points
-pnt = randn(101,3);
+pnt = randn(100,3);
 for i=1:length(pnt)
   pnt(i,:) = 100*pnt(i,:) / norm(pnt(i,:));
 end
@@ -15,7 +15,7 @@ pnt = pnt .* (1 + randn(size(pnt)).*0.1);
 geom(1).pnt = pnt;
 
 % generate some random points
-pnt = randn(102,3);
+pnt = randn(100,3);
 for i=1:length(pnt)
   pnt(i,:) = 90*pnt(i,:) / norm(pnt(i,:));
 end
@@ -23,8 +23,9 @@ end
 pnt = pnt .* (1 + randn(size(pnt)).*0.1);
 geom(2).pnt = pnt;
 
+
 % generate some random points
-pnt = randn(103,3);
+pnt = randn(100,3);
 for i=1:length(pnt)
   pnt(i,:) = 80*pnt(i,:) / norm(pnt(i,:));
 end
@@ -32,8 +33,9 @@ end
 pnt = pnt .* (1 + randn(size(pnt)).*0.1);
 geom(3).pnt = pnt;
 
+
 % generate some random points
-pnt = randn(104,3);
+pnt = randn(100,3);
 for i=1:length(pnt)
   pnt(i,:) = 75*pnt(i,:) / norm(pnt(i,:));
 end
@@ -45,7 +47,7 @@ geom(4).pnt = pnt;
 vol = ft_headmodel_concentricspheres(geom, 'conductivity', [0.42 0.0033 1 0.42]);
 
 % generate a unit sphere
-[pnt, tri] = mesh_sphere(162);
+[pnt, tri] = icosahedron162;
 
 % create a set of electrodes
 sel = find(pnt(:,3)>0);
@@ -57,12 +59,6 @@ end
 
 % project the electrodes on the volume conduction model
 [vol, sens] = ft_prepare_vol_sens(vol, sens);
-
-% construct a regular dipole grid
-cfg = [];
-cfg.resolution = 20; % mm
-cfg.headmodel = vol;
-grid = ft_prepare_sourcemodel(cfg);
 
 % conpute an example leadfield
 lf = ft_compute_leadfield([0 0 50], sens, vol);

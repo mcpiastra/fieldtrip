@@ -8,6 +8,10 @@ function failed_tutorial_natmeg_beamforming
 %
 % it corresponds to the wiki version of 7 October 2014
 
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
+
 clear all
 close all
 
@@ -44,19 +48,19 @@ powcsd_right     = ft_freqanalysis(cfg, data_timewindow);
 cfg                 = [];
 cfg.channel         = {'MEG*2', 'MEG*3'};
 cfg.grad            = powcsd_all.grad;
-cfg.headmodel       = headmodel_meg;
+cfg.vol             = headmodel_meg;
 cfg.dics.reducerank = 2; % default for MEG is 2, for EEG is 3
-cfg.sourcemodel.resolution = 0.5;   % use a 3-D grid with a 0.5 cm resolution
-cfg.sourcemodel.unit       = 'cm';
-cfg.sourcemodel.tight      = 'yes';
+cfg.grid.resolution = 0.5;   % use a 3-D grid with a 0.5 cm resolution
+cfg.grid.unit       = 'cm';
+cfg.grid.tight      = 'yes';
 [grid] = ft_prepare_leadfield(cfg);
 
 cfg              = [];
 cfg.channel      = {'MEG*2', 'MEG*3'};
 cfg.method       = 'dics';
 cfg.frequency    = 18;
-cfg.sourcemodel         = grid;
-cfg.headmodel    = headmodel_meg;
+cfg.grid         = grid;
+cfg.vol          = headmodel_meg;
 cfg.senstype     = 'MEG'; % Must me 'MEG', although we only kept MEG channels, information on EEG channels is still present in data
 cfg.dics.keepfilter   = 'yes'; % We wish to use the calculated filter later on
 cfg.dics.projectnoise = 'yes';
@@ -67,9 +71,9 @@ cfg              = [];
 cfg.channel      = {'MEG*2', 'MEG*3'};
 cfg.method       = 'dics';
 cfg.frequency    = 18;
-cfg.sourcemodel         = grid;
-cfg.sourcemodel.filter  = source_all.avg.filter;
-cfg.headmodel    = headmodel_meg;
+cfg.grid         = grid;
+cfg.grid.filter  = source_all.avg.filter;
+cfg.vol          = headmodel_meg;
 cfg.senstype     ='MEG';
 
 source_left = ft_sourceanalysis(cfg, powcsd_left);
@@ -129,19 +133,19 @@ powcsd_right     = ft_freqanalysis(cfg, data_timewindow);
 % common grid/filter
 cfg                 = [];
 cfg.elec            = powcsd_all.elec;
-cfg.headmodel       = headmodel_eeg;
+cfg.vol             = headmodel_eeg;
 cfg.reducerank      = 3; % default is 3 for EEG, 2 for MEG
-cfg.sourcemodel.resolution = 0.5;   % use a 3-D grid with a 0.5 cm resolution
-cfg.sourcemodel.unit       = 'cm';
-cfg.sourcemodel.tight      = 'yes';
+cfg.grid.resolution = 0.5;   % use a 3-D grid with a 0.5 cm resolution
+cfg.grid.unit       = 'cm';
+cfg.grid.tight      = 'yes';
 [grid] = ft_prepare_leadfield(cfg);
 
 % beamform common filter
 cfg              = [];
 cfg.method       = 'dics';
 cfg.frequency    = 18;
-cfg.sourcemodel         = grid;
-cfg.headmodel    = headmodel_eeg;
+cfg.grid         = grid;
+cfg.vol          = headmodel_eeg;
 cfg.senstype     = 'EEG'; % Remember this must be specified as either EEG, or MEG
 cfg.dics.keepfilter   = 'yes';
 cfg.dics.lambda       = '15%';
@@ -151,9 +155,9 @@ source_all = ft_sourceanalysis(cfg, powcsd_all);
 cfg              = [];
 cfg.method       = 'dics';
 cfg.frequency    = 18;
-cfg.sourcemodel         = grid;
-cfg.sourcemodel.filter  = source_all.avg.filter; % Use the common filter
-cfg.headmodel    = headmodel_eeg;
+cfg.grid         = grid;
+cfg.grid.filter  = source_all.avg.filter; % Use the common filter
+cfg.vol          = headmodel_eeg;
 cfg.senstype     = 'EEG';
 
 source_left = ft_sourceanalysis(cfg, powcsd_left);

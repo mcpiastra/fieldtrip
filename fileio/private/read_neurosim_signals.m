@@ -25,7 +25,7 @@ function [hdr, dat] = read_neurosim_signals(filename)
 %
 % $Id$
 
-if isfolder(filename)
+if isdir(filename)
   filename = fullfile(filename, 'signals');
 end
 
@@ -34,7 +34,7 @@ hdr             = [];
 label = {};
 orig  = {};
 
-fid = fopen_or_error(filename, 'rb');
+fid = fopen(filename, 'rb');
 
 % read the header
 line =  '#';

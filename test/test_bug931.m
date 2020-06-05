@@ -1,9 +1,9 @@
 function test_bug931
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_appendfreq
+% TEST ft_appendfreq
 
 freq1.label = {'1'};
 freq1.time = [1 2];

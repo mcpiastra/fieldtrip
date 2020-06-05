@@ -8,55 +8,50 @@ FieldTrip buffer (V1) client in pure Python
 import socket
 import struct
 import numpy
-import unicodedata
 
 VERSION = 1
+PUT_HDR = 0x101
+PUT_DAT = 0x102
+PUT_EVT = 0x103
+PUT_OK = 0x104
+PUT_ERR = 0x105
+GET_HDR = 0x201
+GET_DAT = 0x202
+GET_EVT = 0x203
+GET_OK = 0x204
+GET_ERR = 0x205
+FLUSH_HDR = 0x301
+FLUSH_DAT = 0x302
+FLUSH_EVT = 0x303
+FLUSH_OK = 0x304
+FLUSH_ERR = 0x305
+WAIT_DAT = 0x402
+WAIT_OK = 0x404
+WAIT_ERR = 0x405
 
-PUT_HDR            = 0x0101
-PUT_DAT            = 0x0102
-PUT_EVT            = 0x0103
-PUT_OK             = 0x0104
-PUT_ERR            = 0x0105
-GET_HDR            = 0x0201
-GET_DAT            = 0x0202
-GET_EVT            = 0x0203
-GET_OK             = 0x0204
-GET_ERR            = 0x0205
-FLUSH_HDR          = 0x0301
-FLUSH_DAT          = 0x0302
-FLUSH_EVT          = 0x0303
-FLUSH_OK           = 0x0304
-FLUSH_ERR          = 0x0305
-WAIT_DAT           = 0x0402
-WAIT_OK            = 0x0404
-WAIT_ERR           = 0x0405
-PUT_HDR_NORESPONSE = 0x0501
-PUT_DAT_NORESPONSE = 0x0502
-PUT_EVT_NORESPONSE = 0x0503
-
-DATATYPE_CHAR    = 0
-DATATYPE_UINT8   = 1
-DATATYPE_UINT16  = 2
-DATATYPE_UINT32  = 3
-DATATYPE_UINT64  = 4
-DATATYPE_INT8    = 5
-DATATYPE_INT16   = 6
-DATATYPE_INT32   = 7
-DATATYPE_INT64   = 8
+DATATYPE_CHAR = 0
+DATATYPE_UINT8 = 1
+DATATYPE_UINT16 = 2
+DATATYPE_UINT32 = 3
+DATATYPE_UINT64 = 4
+DATATYPE_INT8 = 5
+DATATYPE_INT16 = 6
+DATATYPE_INT32 = 7
+DATATYPE_INT64 = 8
 DATATYPE_FLOAT32 = 9
 DATATYPE_FLOAT64 = 10
 DATATYPE_UNKNOWN = 0xFFFFFFFF
 
-CHUNK_UNSPECIFIED        = 0
-CHUNK_CHANNEL_NAMES      = 1
-CHUNK_CHANNEL_FLAGS      = 2
-CHUNK_RESOLUTIONS        = 3
-CHUNK_ASCII_KEYVAL       = 4
-CHUNK_NIFTI1             = 5
-CHUNK_SIEMENS_AP         = 6
-CHUNK_CTF_RES4           = 7
-CHUNK_NEUROMAG_FIF       = 8
-CHUNK_NEUROMAG_ISOTRAK   = 9
+CHUNK_UNSPECIFIED = 0
+CHUNK_CHANNEL_NAMES = 1
+CHUNK_CHANNEL_FLAGS = 2
+CHUNK_RESOLUTIONS = 3
+CHUNK_ASCII_KEYVAL = 4
+CHUNK_NIFTI1 = 5
+CHUNK_SIEMENS_AP = 6
+CHUNK_CTF_RES4 = 7
+CHUNK_NEUROMAG_FIF = 8
+CHUNK_NEUROMAG_ISOTRAK = 9
 CHUNK_NEUROMAG_HPIRESULT = 10
 
 # List for converting FieldTrip datatypes to Numpy datatypes
@@ -89,11 +84,11 @@ def serialize(A):
 
         if A.flags['C_CONTIGUOUS']:
             # great, just use the array's buffer interface
-            return (ft, A.tostring())
+            return (ft, str(A.data))
 
         # otherwise, we need a copy to C order
         AC = A.copy('C')
-        return (ft, AC.tostring())
+        return (ft, str(AC.data))
 
     if isinstance(A, int):
         return (DATATYPE_INT32, struct.pack('i', A))
@@ -330,20 +325,14 @@ class Client:
         return H
 
     def putHeader(self, nChannels, fSample, dataType, labels=None,
-                  chunks=None, reponse=True):
+                  chunks=None):
         haveLabels = False
-        extras = b''
-
-        if (type(labels)==list) and (len(labels)==0):
-            labels=None
-
+        extras = ''
         if not(labels is None):
-            serLabels = b''
-            for n in range(0, nChannels):
-                # ensure that labels are ascii strings, not unicode
-                serLabels += labels[n].encode('ascii', 'ignore') + b'\0'
+            serLabels = ''
             try:
-                pass
+                for n in range(0, nChannels):
+                    serLabels += labels[n] + '\0'
             except:
                 raise ValueError('Channels names (labels), if given,'
                                  ' must be a list of N=numChannels strings')
@@ -362,21 +351,14 @@ class Client:
 
         sizeChunks = len(extras)
 
-        if reponse:
-            command = PUT_HDR
-        else:
-            command = PUT_HDR_NORESPONSE
-
         hdef = struct.pack('IIIfII', nChannels, 0, 0,
                            fSample, dataType, sizeChunks)
-        request = struct.pack('HHI', VERSION, command,
+        request = struct.pack('HHI', VERSION, PUT_HDR,
                               sizeChunks + len(hdef)) + hdef + extras
         self.sendRaw(request)
-
-        if reponse:
-            (status, bufsize, resp_buf) = self.receiveResponse()
-            if status != PUT_OK:
-                raise IOError('Header could not be written')
+        (status, bufsize, resp_buf) = self.receiveResponse()
+        if status != PUT_OK:
+            raise IOError('Header could not be written')
 
     def getData(self, index=None):
         """
@@ -453,7 +435,7 @@ class Client:
 
         return E
 
-    def putEvents(self, E, reponse=True):
+    def putEvents(self, E):
         """
         putEvents(E) -- writes a single or multiple events, depending on
         whether an 'Event' object, or a list of 'Event' objects is
@@ -470,19 +452,13 @@ class Client:
                 buf = buf + e.serialize()
                 num = num + 1
 
-        if reponse:
-            command = PUT_EVT
-        else:
-            command = PUT_EVT_NORESPONSE
+        self.sendRequest(PUT_EVT, buf)
+        (status, bufsize, resp_buf) = self.receiveResponse()
 
-        self.sendRequest(command, buf)
+        if status != PUT_OK:
+            raise IOError('Events could not be written.')
 
-        if reponse:
-            (status, bufsize, resp_buf) = self.receiveResponse()
-            if status != PUT_OK:
-                raise IOError('Events could not be written.')
-
-    def putData(self, D, response=True):
+    def putData(self, D):
         """
         putData(D) -- writes samples that must be given as a NUMPY array,
         samples x channels. The type of the samples (D) and the number of
@@ -501,19 +477,13 @@ class Client:
 
         dataBufSize = len(dataBuf)
 
-        if response:
-            command = PUT_DAT
-        else:
-            command = PUT_DAT_NORESPONSE
-
-        request = struct.pack('HHI', VERSION, command, 16 + dataBufSize)
+        request = struct.pack('HHI', VERSION, PUT_DAT, 16 + dataBufSize)
         dataDef = struct.pack('IIII', nChan, nSamp, dataType, dataBufSize)
         self.sendRaw(request + dataDef + dataBuf)
 
-        if response:
-            (status, bufsize, resp_buf) = self.receiveResponse()
-            if status != PUT_OK:
-                raise IOError('Samples could not be written.')
+        (status, bufsize, resp_buf) = self.receiveResponse()
+        if status != PUT_OK:
+            raise IOError('Samples could not be written.')
 
     def poll(self):
 
@@ -553,36 +523,36 @@ if __name__ == "__main__":
         try:
             port = int(sys.argv[2])
         except:
-            print(('Error: second argument (%s) must be a valid (=integer)'
-                   ' port number' % sys.argv[2]))
+            print ('Error: second argument (%s) must be a valid (=integer)'
+                   ' port number' % sys.argv[2])
             sys.exit(1)
 
     ftc = Client()
 
-    print('Trying to connect to buffer on %s:%i ...' % (hostname, port))
+    print 'Trying to connect to buffer on %s:%i ...' % (hostname, port)
     ftc.connect(hostname, port)
 
-    print('\nConnected - trying to read header...')
+    print '\nConnected - trying to read header...'
     H = ftc.getHeader()
 
     if H is None:
-        print('Failed!')
+        print 'Failed!'
     else:
-        print(H)
-        print(H.labels)
+        print H
+        print H.labels
 
         if H.nSamples > 0:
-            print('\nTrying to read last sample...')
+            print '\nTrying to read last sample...'
             index = H.nSamples - 1
             D = ftc.getData([index, index])
-            print(D)
+            print D
 
         if H.nEvents > 0:
-            print('\nTrying to read (all) events...')
+            print '\nTrying to read (all) events...'
             E = ftc.getEvents()
             for e in E:
-                print(e)
+                print e
 
-    print(ftc.poll())
+    print ftc.poll()
 
     ftc.disconnect()

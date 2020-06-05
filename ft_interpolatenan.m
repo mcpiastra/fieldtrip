@@ -1,4 +1,4 @@
-function [dataout] = ft_interpolatenan(cfg, datain)
+function dataout = ft_interpolatenan(cfg, datain)
 
 % FT_INTERPOLATENAN interpolates time series that contains segments of nans obtained
 % by replacing artifactual data with nans using, for example, FT_REJECTARTIFACT, or
@@ -18,7 +18,8 @@ function [dataout] = ft_interpolatenan(cfg, datain)
 % interpolate using spatial information, e.g. using neighbouring channels, you should
 % use FT_CHANNELREPAIR.
 %
-% To facilitate data-handling and distributed computing, you can use
+% To facilitate data-handling and distributed computing with the peer-to-peer
+% module, this function has the following options:
 %   cfg.inputfile   =  ...
 %   cfg.outputfile  =  ...
 % If you specify one of these (or both) the input data will be read from a *.mat

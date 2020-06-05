@@ -1,9 +1,13 @@
 function test_bug2834
 
-% MEM 2gb
+% MEM 1gb
 % WALLTIME 00:20:00
 
-% DEPENDENCY ft_sourceanalysis
+% TEST ft_sourceanalysis
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
 
 % get some data
 filename = dccnpath('/home/common/matlab/fieldtrip/data/test/latest/freq/meg/freq_mtmconvol_powandcsd_ctf151.mat');
@@ -29,8 +33,8 @@ cfg.channelcmb = [tmp(tril(ones(149),-1)>0) tmp2(tril(ones(149),-1)>0)];
 freq3 = ft_selectdata(cfg, freq);
 
 cfg = [];
-cfg.headmodel = vol;
-cfg.sourcemodel.resolution = 1;
+cfg.vol = vol;
+cfg.grid.resolution = 1;
 cfg.method = 'dics';
 cfg.frequency = 14;
 cfg.latency   = 0.5;

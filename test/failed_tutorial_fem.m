@@ -2,7 +2,12 @@
 
 % WALLTIME 01:00:00
 % MEM 6gb
-% DEPENDENCY ft_volumesegment ft_prepare_mesh ft_prepare_headmodel ft_headmodel_simbio
+
+% TEST ft_volumesegment ft_prepare_mesh ft_prepare_headmodel ft_headmodel_simbio
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
 
 % this test script is based on the tutorial under development at
 % http://www.fieldtriptoolbox.org/development/simbio
@@ -102,16 +107,16 @@ else
     0 0 1 -10
     0 0 0 1
     ];
-  elec_aligned2 = ft_transform_geometry(transform, elec_aligned);
+  elec_aligned2 = ft_transform_sens(transform, elec_aligned);
 end
 
 %%%%%%%%%
 
 cfg = [];
-cfg.headmodel = vol;
-cfg.sourcemodel.resolution = 10;
+cfg.vol = vol;
+cfg.grid.resolution = 10;
 cfg.elec = elec_aligned2;
-cfg.sourcemodel.unit = 'mm';
+cfg.grid.unit = 'mm';
 source = ft_prepare_sourcemodel(cfg);
 
 

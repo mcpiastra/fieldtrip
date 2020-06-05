@@ -1,9 +1,9 @@
 function test_bug538
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_freqanalysis ft_connectivityanalysis ft_freqstatistics
+% TEST ft_freqanalysis ft_connectivityanalysis ft_freqstatistics
 
 % this script addresses bug 538, i.e. incompatibility between
 % ft_freqstatistics, and connectivity data (with 'chan_chan' in dimord)

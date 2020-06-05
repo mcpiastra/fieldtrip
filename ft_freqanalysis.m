@@ -13,7 +13,7 @@ function [freq] = ft_freqanalysis(cfg, data)
 % The configuration should contain:
 %   cfg.method      = different methods of calculating the spectra
 %                     'mtmfft', analyses an entire spectrum for the entire data
-%                       length, implements multitaper frequency transformation.
+%                       length, implements multitaper frequency transformation
 %                     'mtmconvol', implements multitaper time-frequency
 %                       transformation based on multiplication in the
 %                       frequency domain.
@@ -246,16 +246,15 @@ switch cfg.method
       ft_error('you must specify a smoothing parameter with taper = dpss');
     end
     % check for foi above Nyquist
-    if isfield(cfg, 'foi')
-      if any(cfg.foi > (data.fsample+100*eps(data.fsample))/2)
-        % add a small number to allow for numeric tolerance issues
+    if isfield(cfg,'foi')
+      if any(cfg.foi > (data.fsample/2))
         ft_error('frequencies in cfg.foi are above Nyquist')
       end
       if isequal(cfg.taper, 'dpss') && not(isfield(cfg, 'tapsmofrq'))
         ft_error('you must specify a smoothing parameter with taper = dpss');
       end
     end
-    cfg = ft_checkconfig(cfg, 'required', {'toi', 't_ftimwin'});
+    cfg = ft_checkconfig(cfg, 'required', {'toi','t_ftimwin'});
     if ischar(cfg.toi)
       begtim  = min(cellfun(@min,data.time));
       endtim  = max(cellfun(@max,data.time));
@@ -277,31 +276,13 @@ switch cfg.method
       ft_error('you must specify a smoothing parameter with taper = dpss');
     end
     % check for foi above Nyquist
-    if isfield(cfg, 'foi')
+    if isfield(cfg,'foi')
       if any(cfg.foi > (data.fsample/2))
         ft_error('frequencies in cfg.foi are above Nyquist')
       end
     end
     if isequal(cfg.taper, 'dpss') && not(isfield(cfg, 'tapsmofrq'))
       ft_error('you must specify a smoothing parameter with taper = dpss');
-    end
-    
-  case 'irasa'
-    cfg.taper       = ft_getopt(cfg, 'taper', 'hanning');
-    if ~isequal(cfg.taper, 'hanning')
-      ft_error('the irasa method supports hanning tapers only');
-    end
-    if isfield(cfg, 'output') && ~isequal(cfg.output, 'pow')
-      ft_error('the irasa method outputs power only');
-    end
-    if ~isequal(cfg.pad, 'nextpow2')
-      ft_warning('consider using cfg.pad=''nextpow2'' for the irasa method');
-    end
-    % check for foi above Nyquist
-    if isfield(cfg, 'foi')
-      if any(cfg.foi > (data.fsample/2))
-        ft_error('frequencies in cfg.foi are above Nyquist')
-      end
     end
     
   case 'wavelet'
@@ -366,31 +347,31 @@ else
 end
 
 % set flags for keeping trials and/or tapers
-if strcmp(cfg.keeptrials, 'no') &&  strcmp(cfg.keeptapers, 'no')
+if strcmp(cfg.keeptrials,'no') &&  strcmp(cfg.keeptapers,'no')
   keeprpt = 1;
-elseif strcmp(cfg.keeptrials, 'yes') &&  strcmp(cfg.keeptapers, 'no')
+elseif strcmp(cfg.keeptrials,'yes') &&  strcmp(cfg.keeptapers,'no')
   keeprpt = 2;
-elseif strcmp(cfg.keeptrials, 'no') &&  strcmp(cfg.keeptapers, 'yes')
+elseif strcmp(cfg.keeptrials,'no') &&  strcmp(cfg.keeptapers,'yes')
   ft_error('There is currently no support for keeping tapers WITHOUT KEEPING TRIALS.');
-elseif strcmp(cfg.keeptrials, 'yes') &&  strcmp(cfg.keeptapers, 'yes')
+elseif strcmp(cfg.keeptrials,'yes') &&  strcmp(cfg.keeptapers,'yes')
   keeprpt = 4;
 end
-if strcmp(cfg.keeptrials, 'yes') && strcmp(cfg.keeptapers, 'yes')
+if strcmp(cfg.keeptrials,'yes') && strcmp(cfg.keeptapers,'yes')
   if ~strcmp(cfg.output, 'fourier')
     ft_error('Keeping trials AND tapers is only possible with fourier as the output.');
   end
 end
 
 % Set flags for output
-if strcmp(cfg.output, 'pow')
+if strcmp(cfg.output,'pow')
   powflg = 1;
   csdflg = 0;
   fftflg = 0;
-elseif strcmp(cfg.output, 'powandcsd')
+elseif strcmp(cfg.output,'powandcsd')
   powflg = 1;
   csdflg = 1;
   fftflg = 0;
-elseif strcmp(cfg.output, 'fourier')
+elseif strcmp(cfg.output,'fourier')
   powflg = 0;
   csdflg = 0;
   fftflg = 1;
@@ -462,24 +443,24 @@ else
   oldfoi = cfg.foi;
   fboi   = round(cfg.foi .* cfg.pad) + 1;
   cfg.foi    = (fboi-1) ./ cfg.pad; % boi - 1 because 0 Hz is included in fourier output
-  if strcmp(cfg.correctt_ftimwin, 'yes')
+  if strcmp(cfg.correctt_ftimwin,'yes')
     cyclenum = oldfoi .* cfg.t_ftimwin;
     cfg.t_ftimwin = cyclenum ./ cfg.foi;
   end
 end
 
 % tapsmofrq compatibility between functions (make it into a vector if it's not)
-if isfield(cfg, 'tapsmofrq')
-  if strcmp(cfg.method, 'mtmconvol') && length(cfg.tapsmofrq) == 1 && length(cfg.foi) ~= 1
+if isfield(cfg,'tapsmofrq')
+  if strcmp(cfg.method,'mtmconvol') && length(cfg.tapsmofrq) == 1 && length(cfg.foi) ~= 1
     cfg.tapsmofrq = ones(length(cfg.foi),1) * cfg.tapsmofrq;
-  elseif strcmp(cfg.method, 'mtmfft') && length(cfg.tapsmofrq) ~= 1
+  elseif strcmp(cfg.method,'mtmfft') && length(cfg.tapsmofrq) ~= 1
     ft_warning('cfg.tapsmofrq should be a single number when cfg.method = mtmfft, now using only the first element')
     cfg.tapsmofrq = cfg.tapsmofrq(1);
   end
 end
 
 % options that don't change over trials
-if isfield(cfg, 'tapsmofrq')
+if isfield(cfg,'tapsmofrq')
   options = {'pad', cfg.pad, 'padtype', cfg.padtype, 'freqoi', cfg.foi, 'tapsmofrq', cfg.tapsmofrq, 'polyorder', cfg.polyremoval};
 else
   options = {'pad', cfg.pad, 'padtype', cfg.padtype, 'freqoi', cfg.foi, 'polyorder', cfg.polyremoval};
@@ -527,10 +508,6 @@ for itrial = 1:ntrials
       
     case 'mtmfft'
       [spectrum,ntaper,foi] = ft_specest_mtmfft(dat, time, 'taper', cfg.taper, options{:}, 'feedback', fbopt);
-      hastime = false;
-      
-    case 'irasa'
-      [spectrum,ntaper,foi] = ft_specest_irasa(dat, time, 'taper', cfg.taper, options{:}, 'feedback', fbopt);
       hastime = false;
       
     case 'wavelet'
@@ -588,7 +565,7 @@ for itrial = 1:ntrials
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%% Memory allocation
-  if strcmp(cfg.method, 'mtmfft') && strcmp(cfg.taper, 'dpss')
+  if strcmp(cfg.method, 'mtmfft') && strcmp(cfg.taper,'dpss')
     % memory allocation for mtmfft is slightly different because of the possiblity of
     % variable number of tapers over trials (when using dpss), the below exception is
     % made so memory can still be allocated fully (see bug #1025
@@ -605,17 +582,17 @@ for itrial = 1:ntrials
   % by default, everything is has the time dimension, if not, some specifics are performed
   if itrial == 1
     % allocate memory to output variables
-    if keeprpt == 1 % cfg.keeptrials, 'no' &&  cfg.keeptapers, 'no'
+    if keeprpt == 1 % cfg.keeptrials,'no' &&  cfg.keeptapers,'no'
       if powflg, powspctrm     = zeros(nchan,nfoi,ntoi,cfg.precision);             end
       if csdflg, crsspctrm     = complex(zeros(nchancmb,nfoi,ntoi,cfg.precision)); end
       if fftflg, fourierspctrm = complex(zeros(nchan,nfoi,ntoi,cfg.precision));    end
       dimord    = 'chan_freq_time';
-    elseif keeprpt == 2 % cfg.keeptrials, 'yes' &&  cfg.keeptapers, 'no'
+    elseif keeprpt == 2 % cfg.keeptrials,'yes' &&  cfg.keeptapers,'no'
       if powflg, powspctrm     = nan(ntrials,nchan,nfoi,ntoi,cfg.precision);                                                                 end
       if csdflg, crsspctrm     = complex(nan(ntrials,nchancmb,nfoi,ntoi,cfg.precision),nan(ntrials,nchancmb,nfoi,ntoi,cfg.precision)); end
       if fftflg, fourierspctrm = complex(nan(ntrials,nchan,nfoi,ntoi,cfg.precision),nan(ntrials,nchan,nfoi,ntoi,cfg.precision));       end
       dimord    = 'rpt_chan_freq_time';
-    elseif keeprpt == 4 % cfg.keeptrials, 'yes' &&  cfg.keeptapers, 'yes'
+    elseif keeprpt == 4 % cfg.keeptrials,'yes' &&  cfg.keeptapers,'yes'
       if powflg, powspctrm     = zeros(ntaptrl,nchan,nfoi,ntoi,cfg.precision);        end %
       if csdflg, crsspctrm     = complex(zeros(ntaptrl,nchancmb,nfoi,ntoi,cfg.precision)); end
       if fftflg, fourierspctrm = complex(zeros(ntaptrl,nchan,nfoi,ntoi,cfg.precision));    end
@@ -626,7 +603,7 @@ for itrial = 1:ntrials
     end
     
     % prepare calcdof
-    if strcmp(cfg.calcdof, 'yes')
+    if strcmp(cfg.calcdof,'yes')
       if hastime
         dof = zeros(nfoi,ntoi);
         %dof = zeros(ntrials,nfoi,ntoi);
@@ -650,17 +627,14 @@ for itrial = 1:ntrials
   %%% Create output
   if keeprpt~=4
     
-    % mtmconvol is a special case and needs special processing
-    if strcmp(cfg.method, 'mtmconvol')
-      foiind = ones(1,nfoi);
-    else
-      % by using this vector below for indexing, the below code does not need to be duplicated for mtmconvol
-      foiind = 1:nfoi;
-    end
-    
     for ifoi = 1:nfoi
-      if strcmp(cfg.method, 'mtmconvol')
+      
+      % mtmconvol is a special case and needs special processing
+      if strcmp(cfg.method,'mtmconvol')
         spectrum = reshape(permute(spectrum_mtmconvol(:,:,freqtapind{ifoi}),[3 1 2]),[ntaper(ifoi) nchan 1 ntoi]);
+        foiind = ones(1,nfoi);
+      else
+        foiind = 1:nfoi; % by using this vector below for indexing, the below code does not need to be duplicated for mtmconvol
       end
       
       % set ingredients for below
@@ -675,16 +649,12 @@ for itrial = 1:ntrials
       
       acttap = logical([ones(ntaper(ifoi),1);zeros(size(spectrum,1)-ntaper(ifoi),1)]);
       if powflg
-        if strcmp(cfg.method, 'irasa') % ft_specest_irasa outputs power and not amplitude
-          powdum = spectrum(acttap,:,foiind(ifoi),acttboi);
-        else
-          powdum = abs(spectrum(acttap,:,foiind(ifoi),acttboi)) .^2;
-        end
+        powdum = abs(spectrum(acttap,:,foiind(ifoi),acttboi)) .^2;
         % sinetaper scaling is disabled, because it is not consistent with the other
         % tapers. if scaling is required, please specify cfg.taper =
         % 'sine_old'
         
-        %         if isfield(cfg, 'taper') && strcmp(cfg.taper, 'sine')
+        %         if isfield(cfg,'taper') && strcmp(cfg.taper, 'sine')
         %             %sinetapscale = zeros(ntaper(ifoi),nfoi);  % assumes fixed number of tapers
         %             sinetapscale = zeros(ntaper(ifoi),1);  % assumes fixed number of tapers
         %             for isinetap = 1:ntaper(ifoi)  % assumes fixed number of tapers
@@ -698,13 +668,13 @@ for itrial = 1:ntrials
         fourierdum = spectrum(acttap,:,foiind(ifoi),acttboi);
       end
       if csdflg
-        csddum = spectrum(acttap,cutdatindcmb(:,1),foiind(ifoi),acttboi) .* conj(spectrum(acttap,cutdatindcmb(:,2),foiind(ifoi),acttboi));
+        csddum =      spectrum(acttap,cutdatindcmb(:,1),foiind(ifoi),acttboi) .* conj(spectrum(acttap,cutdatindcmb(:,2),foiind(ifoi),acttboi));
       end
       
       % switch between keep's
       switch keeprpt
         
-        case 1 % cfg.keeptrials, 'no' &&  cfg.keeptapers, 'no'
+        case 1 % cfg.keeptrials,'no' &&  cfg.keeptapers,'no'
           if exist('trlcnt', 'var')
             trlcnt(1, ifoi, :) = trlcnt(1, ifoi, :) + shiftdim(double(acttboi(:)'),-1);
           end
@@ -722,7 +692,7 @@ for itrial = 1:ntrials
             %crsspctrm(:,ifoi,~acttboi) = NaN;
           end
           
-        case 2 % cfg.keeptrials, 'yes' &&  cfg.keeptapers, 'no'
+        case 2 % cfg.keeptrials,'yes' &&  cfg.keeptapers,'no'
           if powflg
             powspctrm(itrial,:,ifoi,acttboi) = reshape(mean(powdum,1),[nchan 1 nacttboi]);
             powspctrm(itrial,:,ifoi,~acttboi) = NaN;
@@ -739,7 +709,7 @@ for itrial = 1:ntrials
       end % switch keeprpt
       
       % do calcdof  dof = zeros(numper,numfoi,numtoi);
-      if strcmp(cfg.calcdof, 'yes')
+      if strcmp(cfg.calcdof,'yes')
         if hastime
           acttimboiind = ~all(isnan(spectrum(1,:,foiind(ifoi),:)), 2); % check over all channels, some channels might contain a NaN
           acttimboiind = reshape(acttimboiind, [1 ntoi]);
@@ -756,7 +726,7 @@ for itrial = 1:ntrials
       tapcounter = 0;
     end
     
-    if strcmp(cfg.method, 'mtmconvol')
+    if strcmp(cfg.method,'mtmconvol')
       spectrum = permute(reshape(spectrum_mtmconvol,[nchan ntoi ntaper(1) nfoi]),[3 1 4 2]);
     end
     
@@ -765,11 +735,7 @@ for itrial = 1:ntrials
     %rptind = reshape(1:ntrials .* maxtap,[maxtap ntrials]);
     %currrptind = rptind(:,itrial);
     if powflg
-      if strcmp(cfg.method, 'irasa') % ft_specest_irasa outputs power and not amplitude
-        powspctrm(currrptind,:,:) = spectrum;
-      else
-        powspctrm(currrptind,:,:) = abs(spectrum).^2;
-      end
+      powspctrm(currrptind,:,:) = abs(spectrum).^2;
     end
     if fftflg
       fourierspctrm(currrptind,:,:,:) = spectrum;
@@ -825,7 +791,7 @@ freq.freq   = foi;
 hasdc       = find(foi==0);
 hasnyq      = find(foi==data.fsample./2);
 hasdc_nyq   = [hasdc hasnyq];
-if exist('toi', 'var')
+if exist('toi','var')
   freq.time = toi;
 end
 if powflg

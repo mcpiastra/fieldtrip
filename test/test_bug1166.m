@@ -1,9 +1,9 @@
 function test_bug1166
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_prepare_headmodel ft_headmodel_bem_asa 
+% TEST ft_prepare_headmodel ft_headmodel_bem_asa 
 
 % This function tests that the inputs for the headmodel functions are
 % read-in correctly

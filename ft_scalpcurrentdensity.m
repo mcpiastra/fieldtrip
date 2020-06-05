@@ -20,7 +20,8 @@ function [scd] = ft_scalpcurrentdensity(cfg, data)
 %   cfg.method       = 'finite' for finite-difference method or
 %                      'spline' for spherical spline method
 %                      'hjorth' for Hjorth approximation method
-%   cfg.elec         = structure with electrode positions or filename, see FT_READ_SENS
+%   cfg.elecfile     = string, file containing the electrode definition
+%   cfg.elec         = structure with electrode definition
 %   cfg.trials       = 'all' or a selection given as a 1xN vector (default = 'all')
 %   cfg.feedback     = string, 'no', 'text', 'textbar', 'gui' (default = 'text')
 %
@@ -39,9 +40,6 @@ function [scd] = ft_scalpcurrentdensity(cfg, data)
 %
 % The hjorth method requires the following
 %   cfg.neighbours   = neighbourhood structure, see FT_PREPARE_NEIGHBOURS
-%
-% For the spline method you can specify the following
-%   cfg.badchannel      = cell-array, see FT_CHANNELSELECTION for details (default = [])
 %
 % Note that the skin conductivity, electrode dimensions and the potential
 % all have to be expressed in the same SI units, otherwise the units of
@@ -118,11 +116,10 @@ if ft_abort
 end
 
 % set the defaults
-cfg.method          = ft_getopt(cfg, 'method',       'spline');
-cfg.conductivity    = ft_getopt(cfg, 'conductivity', 0.33); % in S/m
-cfg.trials          = ft_getopt(cfg, 'trials',       'all', 1);
-cfg.feedback        = ft_getopt(cfg, 'feedback',     'text');
-cfg.badchannel      = ft_getopt(cfg, 'badchannel',     {});
+cfg.method       = ft_getopt(cfg, 'method',       'spline');
+cfg.conductivity = ft_getopt(cfg, 'conductivity', 0.33); % in S/m
+cfg.trials       = ft_getopt(cfg, 'trials',       'all', 1);
+cfg.feedback     = ft_getopt(cfg, 'feedback',     'text');
 
 switch cfg.method
   case 'hjorth'
@@ -152,66 +149,61 @@ end
 dtype = ft_datatype(data);
 
 % check if the input data is valid for this function
-data = ft_checkdata(data, 'datatype', 'raw', 'feedback', 'yes', 'ismeg', []);
+data = ft_checkdata(data, 'datatype', 'raw', 'feedback', 'yes', 'iseeg','yes','ismeg',[]);
+
+% select trials of interest
+tmpcfg = keepfields(cfg, {'trials', 'showcallinfo'});
+data   = ft_selectdata(tmpcfg, data);
+% restore the provenance information
+[cfg, data] = rollback_provenance(cfg, data);
 
 % get the electrode positions
 tmpcfg = cfg;
 tmpcfg.senstype = 'EEG';
+
 elec = ft_fetch_sens(tmpcfg, data);
 
-% select channels and trials of interest
-tmpcfg = keepfields(cfg, {'trials', 'showcallinfo'});
-tmpcfg.channel = elec.label;
-data = ft_selectdata(tmpcfg, data);
-% restore the provenance information
-[cfg, data] = rollback_provenance(cfg, data);
-
-Ntrials = numel(data.trial);
-
-if isempty(cfg.badchannel)
-  % check if the first sample of the first trial contains NaNs; if so treat it as a bad channel
-  cfg.badchannel = ft_channelselection(find(isnan(data.trial{1}(:,1))), data.label);
-  if ~isempty(cfg.badchannel)
-    ft_info('detected channel %s as bad\n', cfg.badchannel{:});
-  end
+% remove all junk fields from the electrode array
+tmp  = elec;
+elec = [];
+elec.chanpos = tmp.chanpos;
+if isfield(tmp, 'elecpos')
+  elec.elecpos = tmp.elecpos;
 end
+elec.label   = tmp.label;
 
-% match the order of the data channels with the channel positions, order them according to the data
-[datindx, elecindx] = match_str(data.label, elec.label);
-[goodindx, tmp]     = match_str(data.label, setdiff(data.label, cfg.badchannel));
-
-allchanpos = elec.chanpos(elecindx,:);    % the position of all channels, ordered according to the data
-goodchanpos = allchanpos(goodindx,:);     % the position of good channels
-anychanpos  = [0 0 1];                    % random channel, will be used in case there are no bad channels
+% find matching electrode positions and channels in the data
+[dataindx, elecindx] = match_str(data.label, elec.label);
+data.label   = data.label(dataindx);
+elec.label   = elec.label(elecindx);
+elec.chanpos = elec.chanpos(elecindx, :);
+Ntrials = length(data.trial);
+for trlop=1:Ntrials
+  data.trial{trlop} = data.trial{trlop}(dataindx,:);
+end
 
 % compute SCD for each trial
 if strcmp(cfg.method, 'spline')
+
   ft_progress('init', cfg.feedback, 'computing SCD for trial...')
   for trlop=1:Ntrials
-    % do compute interpolation
+    % do not compute interpolation, but only one value at [0 0 1]
+    % this also gives L1, the laplacian of the original data in which we
+    % are interested here
+
     ft_progress(trlop/Ntrials, 'computing SCD for trial %d of %d', trlop, Ntrials);
-    if ~isempty(cfg.badchannel)
-      % compute scd for all channels, also for the bad ones
-      fprintf('computing scd also at locations of bad channels');
-      [V2, L2, L1] = splint(goodchanpos, data.trial{trlop}(goodindx,:), allchanpos, cfg.order, cfg.degree, cfg.lambda);
-      scd.trial{trlop} = L2;
-    else
-      % just compute scd for input channels, specify arbitrary channel to-be-discarded for interpolation to save computation time
-      [V2, L2, L1] = splint(goodchanpos, data.trial{trlop}(goodindx,:), anychanpos, cfg.order, cfg.degree, cfg.lambda);
-      scd.trial{trlop} = L1;
-    end
+    [V2, L2, L1] = splint(elec.chanpos, data.trial{trlop}, [0 0 1], cfg.order, cfg.degree, cfg.lambda);
+    scd.trial{trlop} = L1;
   end
+
   ft_progress('close');
 
 elseif strcmp(cfg.method, 'finite')
-  if ~isempty(cfg.badchannel)
-    ft_error('the method "%s" does not support the specification of bad channels', cfg.method);
-  end
   % the finite difference approach requires a triangulation
-  prj = elproj(allchanpos);
+  prj = elproj(elec.chanpos);
   tri = delaunay(prj(:,1), prj(:,2));
   % the new electrode montage only needs to be computed once for all trials
-  montage.tra = lapcal(allchanpos, tri);
+  montage.tra = lapcal(elec.chanpos, tri);
   montage.labelold = data.label;
   montage.labelnew = data.label;
   % apply the montage to the data, also update the electrode definition
@@ -219,9 +211,6 @@ elseif strcmp(cfg.method, 'finite')
   elec = ft_apply_montage(elec, montage);
 
 elseif strcmp(cfg.method, 'hjorth')
-  if ~isempty(cfg.badchannel)
-    ft_error('the method "%s" does not support the specification of bad channels', cfg.method);
-  end
   % convert the neighbourhood structure into a montage
   labelnew = {};
   labelold = {};
@@ -247,7 +236,7 @@ elseif strcmp(cfg.method, 'hjorth')
   elec = ft_apply_montage(elec, montage);
 
 else
-  ft_error('unknown method "%s"', cfg.method);
+  ft_error('unknown method for SCD computation');
 end
 
 if strcmp(cfg.method, 'spline') || strcmp(cfg.method, 'finite')

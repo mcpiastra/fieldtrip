@@ -1,9 +1,9 @@
 function test_xunit_stacktest
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_defaults ft_warning
+% TEST ft_defaults ft_warning
 
 ft_defaults
 

@@ -24,7 +24,7 @@ if ~strcmp(ext,'.pos')
     return
 end
 
-fid  = fopen_or_error(filename, 'r');
+fid  = fopen(filename, 'r');
 data = textscan(fid, '%s%f%f%f','headerlines',1);
 fclose(fid);
 

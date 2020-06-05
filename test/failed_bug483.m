@@ -1,8 +1,10 @@
 function failed_bug483
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_read_header ft_read_data ft_read_event
+
+% TEST test_bug483
+% TEST ft_read_header ft_read_data ft_read_event
 
 % the original file location was /Users/robert/Manzana/data/dataformat/testdata/neuromag/rik_henson_MRC-CBU/raw.fif
 filename = dccnpath('/home/common/matlab/fieldtrip/data/test/original/meg/neuromag306/raw.fif');

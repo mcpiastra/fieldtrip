@@ -2,7 +2,10 @@ function failed_bug2790
 
 % MEM 6gb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_selectdata ft_connectivityanalysis
+
+% TEST test_bug2790
+% TEST ft_selectdata
+% TEST ft_connectivityanalysis
 
 filename = dccnpath('/home/common/matlab/fieldtrip/data/test/bug2790.mat');
 load(filename);

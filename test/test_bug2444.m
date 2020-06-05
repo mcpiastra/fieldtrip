@@ -1,9 +1,9 @@
 function test_bug2444
 
-% MEM 1gb
+% MEM 1000mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_selectdata ft_selectdata_new
+% TEST ft_selectdata ft_selectdata_new
 
 %% make some data
 

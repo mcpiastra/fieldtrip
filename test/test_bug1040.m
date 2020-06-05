@@ -1,9 +1,9 @@
 function test_bug1040
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY: bug1040
+% TEST: bug1040
 
 % function to test ft_prepare_sourcemodel given configuration options (cfg),
 % a single sphere volume condution model (vol), and gradiometer information
@@ -31,11 +31,9 @@ success = true;
 % create config options
 cfg                 = [];
 cfg.symmetry        = [];
-cfg.resolution = 2;
-cfg.headmodel = vol;
-cfg.grad = grad_standard;
+cfg.grid.resolution = 2;
 
-[grid, cfg] = ft_prepare_sourcemodel(cfg);
+[grid, cfg] = ft_prepare_sourcemodel(cfg, vol, grad_standard);
 
 % check whether a grid could be computed
 success     = success && ~isempty(grid);
@@ -55,11 +53,9 @@ end
 % create config options
 cfg                 = [];
 cfg.symmetry        = [];
-cfg.resolution = 2;
-cfg.headmodel = vol;
-cfg.grad = grad_extended;
+cfg.grid.resolution = 2;
 
-[grid, cfg] = ft_prepare_sourcemodel(cfg);
+[grid, cfg] = ft_prepare_sourcemodel(cfg, vol, grad_extended);
 
 % check whether a grid could be computed
 success     = success && ~isempty(grid);

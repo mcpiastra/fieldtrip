@@ -1,9 +1,10 @@
 function test_ft_channelselection
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_senstype ref_datasets
+% TEST test_ft_channelselection 
+% TEST ft_senstype ref_datasets
 
 datasets = ref_datasets;
 

@@ -1,10 +1,10 @@
 function test_pull348
 
-% MEM 2gb
+% MEM 1000mb
 % WALLTIME 00:10:00
 %
-% DEPENDENCY ft_componentanalysis 
-% DEPENDENCY bsscca
+% TEST ft_componentanalysis 
+% TEST bsscca
 
 % this function tests whether the bsscca method works ok in
 % ft_componentanalysis

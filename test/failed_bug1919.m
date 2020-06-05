@@ -1,8 +1,10 @@
 function failed_bug1919
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_senslabel
+
+% TEST test_bug1919
+% TEST ft_senslabel
 
 system = {
   'ant128'

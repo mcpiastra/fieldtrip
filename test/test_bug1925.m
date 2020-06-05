@@ -1,14 +1,14 @@
 function test_bug1925
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY surface_nesting ft_headmodel_bemcp
+% TEST surface_nesting ft_headmodel_bemcp
 
 [ftver, ftpath] = ft_version;
 cd(fullfile(ftpath, 'forward/private')); % this is where the surface_nesting function is located
 
-[pos, tri] = mesh_sphere(162);
+[pos, tri] = icosahedron162;
 
 bnd10.id  = 10;
 bnd10.pos = pos*10;

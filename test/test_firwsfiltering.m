@@ -1,10 +1,10 @@
 function test_firwsfiltering
 
-% MEM 3gb
-% WALLTIME 00:20:00
+% MEM 2048mb
+% WALLTIME 00:10:00
 
-% DEPENDENCY ft_preprocessing filter_with_correction ft_preproc_bandpassfilter
-% DEPENDENCY ft_preproc_highpassfilter ft_preproc_lowpassfilter firws
+% TEST ft_preprocessing filter_with_correction ft_preproc_bandpassfilter
+% TEST ft_preproc_highpassfilter ft_preproc_lowpassfilter firws
 
 %% create some data
 

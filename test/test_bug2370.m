@@ -1,13 +1,13 @@
 function test_bug2370
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_filetype ft_read_headshape ft_write_headshape read_ply write_ply
+% TEST ft_filetype ft_read_headshape ft_write_headshape read_ply write_ply
 
 filename = [tempname '.ply'];
 
-[pos, tri] = mesh_sphere(162);
+[pos, tri] = icosahedron162;
 
 % combine them in a structure
 mesh1.pos = pos;

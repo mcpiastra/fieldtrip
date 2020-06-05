@@ -1,9 +1,14 @@
 function test_bug1443
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_rejectcomponent ft_componentanalysis
+% TEST ft_rejectcomponent ft_componentanalysis
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
+ft_default.feedback = 'no';
 
 load(dccnpath('/home/common/matlab/fieldtrip/data/test/latest/raw/meg/preproc_ctf151.mat'));
 
@@ -25,15 +30,17 @@ figure; imagesc(rej2.grad.tra - rej1.grad.tra); caxis([-1 1])
 
 load standard_sourcemodel3d10mm
 load standard_singleshell
+cfg=[];
+cfg.grid=sourcemodel;
+cfg.vol=vol;
 
-cfg = [];
-cfg.sourcemodel = sourcemodel;
-cfg.headmodel = vol;
-
-cfg.grad = rej1.grad;
+cfg.grad=rej1.grad;
 grid1 = ft_prepare_leadfield(cfg, rej1);
 
-cfg.grad = rej2.grad;
+cfg.grad=rej2.grad;
 grid2 = ft_prepare_leadfield(cfg, rej2);
 
 assert(~isequaln(grid1.leadfield,grid2.leadfield))
+
+
+

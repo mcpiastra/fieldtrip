@@ -20,7 +20,7 @@ function ft_sourcewrite(cfg, source)
 % file on disk. This mat file should contain only a single variable,
 % corresponding with the input data structure.
 %
-% See also FT_SOURCEANALYSIS, FT_SOURCEDESCRIPTIVES, FT_VOLUMEWRITE
+% See also FT_SOURCEANALYSIS FT_SOURCEDESCRIPTIVES FT_VOLUMEWRITE
 
 % Copyright (C) 2011, Jan-Mathijs Schoffelen
 % Copyright (C) 2011-2014, Jan-Mathijs Schoffelen, Robert Oostenveld
@@ -151,7 +151,7 @@ switch (cfg.filetype)
     ft_write_cifti(cfg.filename, source, 'parameter', cfg.parameter, 'brainstructure', cfg.brainstructure, 'parcellation', cfg.parcellation, 'precision', cfg.precision);
 
   otherwise
-    ft_error('unsupported output format "%s"', cfg.filetype);
+    ft_error('unsupported output format (%s)', cfg.filetype);
 end % switch filetype
 
 ft_postamble debug

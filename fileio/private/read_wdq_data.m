@@ -70,7 +70,7 @@ else
   dat = zeros(length(chanindx), nsamplestotal);
 end
 
-fid = fopen_or_error(filename, 'r');
+fid = fopen(filename, 'r');
 for k = 1:nchunks
   % set file pointer to where the data starts in the file
   offset   = (begsample(k)-1) * hdr.nchan * 2;

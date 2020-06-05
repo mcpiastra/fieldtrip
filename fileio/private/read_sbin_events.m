@@ -38,7 +38,10 @@ EventCodes = [];
 segHdr = [];
 eventData = [];
 
-fid=fopen_or_error([filename],'r');
+fid=fopen([filename],'r');
+if fid==-1
+    ft_error('wrong filename')
+end
 
 version     = fread(fid,1,'int32');
 

@@ -1,9 +1,9 @@
 function test_channelconnectivity
 
-% MEM 1gb
+% MEM 1000mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY channelconnectivity ft_megplanar ft_statistics_montecarlo
+% TEST test_channelconnectivity channelconnectivity ft_megplanar statistics_montecarlo
 
 % Tests the functionality of private/channelconnectivity(), which generates
 % a logical NxN matrix of channel connectivity based on a neighbours

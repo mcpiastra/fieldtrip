@@ -1,9 +1,9 @@
 function test_bug1573
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_read_mri ft_volumnrealign ft_sourceinterpolate
+% TEST ft_read_mri ft_volumnrealign ft_sourceinterpolate
 
 template = dccnpath('/home/common/matlab/spm8/canonical/single_subj_T1.nii');
 template_mri = ft_read_mri(template);

@@ -26,6 +26,7 @@ data.trial =  {
   };
 
 cfg = [];
+cfg.vartrllength = 2;
 avg = ft_timelockanalysis(cfg, data);
 
 assert(avg.dof(1)==7)

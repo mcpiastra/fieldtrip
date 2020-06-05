@@ -1,6 +1,6 @@
 function test_datatype_source
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
 % this function defines a bunch of 'ideal' source structures
@@ -18,7 +18,7 @@ inside  = find(inside);
 clear x y z
 
 % create a triangulated mesh
-[pnt,tri] = mesh_sphere(162);
+[pnt,tri] = icosahedron162;
 npnt      = size(pnt,1);
 
 

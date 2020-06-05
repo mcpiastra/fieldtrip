@@ -1,9 +1,9 @@
 function test_ft_topoplotCC
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_topoplotCC
+% TEST ft_topoplotCC
 
 % this function tests the ft_topoplotCC function and should display a
 % figure with the ctf151 layout and a few arrows.  It does no explicit

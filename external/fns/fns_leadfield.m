@@ -28,7 +28,7 @@ ROW = modelSizes(1) + 1;
 COL = modelSizes(2) + 1;
 
 [M, N] = size(forwardSolutions);
-[numberOfDipoles, dum] = size(dipoles);
+[numberOfDipoles, ~] = size(dipoles); 
 
 % Allocate memory for lead field matrix
 L = zeros(M, numberOfDipoles * 3);

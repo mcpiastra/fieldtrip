@@ -34,8 +34,10 @@ function [stat, cfg] = ft_statistics_montecarlo(cfg, dat, design, varargin)
 % statistics will be thresholded and combined into one statistical
 % value per cluster.
 %   cfg.clusterstatistic = how to combine the single samples that belong to a cluster, 'maxsum', 'maxsize', 'wcm' (default = 'maxsum')
-%                          the option 'wcm' refers to 'weighted cluster mass', a statistic that combines cluster size and intensity; 
-%                          see Hayasaka & Nichols (2004) NeuroImage for details
+%                          option 'wcm' refers to 'weighted cluster mass',
+%                          a statistic that combines cluster size and
+%                          intensity; see Hayasaka & Nichols (2004) NeuroImage
+%                          for details
 %   cfg.clusterthreshold = method for single-sample threshold, 'parametric', 'nonparametric_individual', 'nonparametric_common' (default = 'parametric')
 %   cfg.clusteralpha     = for either parametric or nonparametric thresholding per tail (default = 0.05)
 %   cfg.clustercritval   = for parametric thresholding (default is determined by the statfun)
@@ -44,7 +46,7 @@ function [stat, cfg] = ft_statistics_montecarlo(cfg, dat, design, varargin)
 % To include the channel dimension for clustering, you should specify
 %   cfg.neighbours       = neighbourhood structure, see FT_PREPARE_NEIGHBOURS
 % If you specify an empty neighbourhood structure, clustering will only be done
-% over frequency and/or time and not over neighbouring channels.
+% in frequency and time (if available) and not over neighbouring channels.
 %
 % The statistic that is computed for each sample in each random reshuffling
 % of the data is specified as
@@ -98,9 +100,7 @@ function [stat, cfg] = ft_statistics_montecarlo(cfg, dat, design, varargin)
 %
 % $Id$
 
-% do a sanity check on the input data
-assert(isnumeric(dat),    'this function requires numeric data as input, you probably want to use FT_TIMELOCKSTATISTICS, FT_FREQSTATISTICS or FT_SOURCESTATISTICS instead');
-assert(isnumeric(design), 'this function requires numeric data as input, you probably want to use FT_TIMELOCKSTATISTICS, FT_FREQSTATISTICS or FT_SOURCESTATISTICS instead');
+ft_preamble randomseed; % deal with the user specified random seed
 
 % check if the input cfg is valid for this function
 cfg = ft_checkconfig(cfg, 'renamed',     {'factor',           'ivar'});
@@ -130,7 +130,7 @@ cfg.correcttail  = ft_getopt(cfg, 'correcttail',  'no');
 cfg.precondition = ft_getopt(cfg, 'precondition', []);
 
 % explicit check for option 'yes' in cfg.correctail.
-if strcmp(cfg.correcttail, 'yes')
+if strcmp(cfg.correcttail,'yes')
   ft_error('cfg.correcttail = ''yes'' is not allowed, use either ''prob'', ''alpha'' or ''no''')
 end
 
@@ -188,7 +188,7 @@ elseif isfield(cfg,'correctp') && strcmp(cfg.correctp,'no')
   cfg = ft_checkconfig(cfg, 'renamed', {'correctp', 'correcttail'});
 end
 if strcmp(cfg.correcttail,'no') && cfg.tail==0 && cfg.alpha==0.05
-  ft_warning('Doing a two-sided test without correcting p-values or alpha-level, p-values and alpha-level will reflect one-sided tests per tail. See http://bit.ly/2YQ1Hm8')
+  ft_warning('doing a two-sided test without correcting p-values or alpha-level, p-values and alpha-level will reflect one-sided tests per tail')
 end
 
 % for backward compatibility
@@ -214,7 +214,7 @@ resample = resampledesign(cfg, design);
 Nrand = size(resample,1);
 
 % most of the statfuns result in this warning, which is not interesting
-ws = ft_warning('off', 'MATLAB:warn_r14_stucture_assignment');
+ws = warning('off', 'MATLAB:warn_r14_stucture_assignment');
 
 if strcmp(cfg.correctm, 'cluster')
   % determine the critical value for cluster thresholding
@@ -270,14 +270,12 @@ elseif num==3
   tmpcfg = cfg;
   if strcmp(cfg. precondition, 'before'), tmpcfg.preconditionflag = 1; end
   [statobs, tmpcfg, dat]  = statfun(tmpcfg, dat, design);
-  tmpcfg.preconditionflag = 0;
-  cfg = tmpcfg;
 end
 
 if isstruct(statobs)
   % remember all details for later reference, continue to work with the statistic
   statfull = statobs;
-  statobs  = statobs.stat;
+  statobs  = getfield(statfull, 'stat');
 else
   % remember the statistic for later reference, continue to work with the statistic
   statfull.stat = statobs;
@@ -298,12 +296,6 @@ if strcmp(cfg.precondition, 'after')
   tmpcfg = cfg;
   tmpcfg.preconditionflag = 1;
   [tmpstat, tmpcfg, dat] = statfun(tmpcfg, dat, design);
-end
-
-if strcmp(cfg.correctm, 'max')
-  % pre-allocate the memory to hold the distribution of most extreme positive (right) and negative (left) statistical values
-  posdistribution = nan(1,Nrand);
-  negdistribution = nan(1,Nrand);
 end
 
 % compute the statistic for the randomized data and count the outliers
@@ -493,7 +485,15 @@ if exist('statrand', 'var')
 end
 
 % return optional other details that were returned by the statfun
-stat = copyfields(statfull, stat, fieldnames(statfull));
+fn = fieldnames(statfull);
+for i=1:length(fn)
+  if ~isfield(stat, fn{i})
+    stat = setfield(stat, fn{i}, getfield(statfull, fn{i}));
+  end
+end
 
-ft_warning(ws); % revert to original state
+ft_postamble randomseed; % deal with the potential user specified randomseed
+
+warning(ws); % revert to original state
+
 

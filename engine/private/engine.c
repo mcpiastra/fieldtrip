@@ -78,7 +78,7 @@ void exitFun(void) {
   return;
 }
 
-/* this function will be started as a separate thread */
+/* this function will be started as a seperate thread */
 void evalString(void *argin) {
   int   retval;
   char *cmd;

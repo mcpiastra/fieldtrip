@@ -86,12 +86,14 @@ if strcmp(cfg.method, 'nan'), cfg.interptoi = 0; end
 
 % autodetect the spike channels
 ntrial = length(data.trial);
-nchans = length(data.label);
-sc = zeros(nchans,ntrial);
+nchans  = length(data.label);
+spikechan = zeros(nchans,1);
 for i=1:ntrial
-    sc(:,i) = all(mod(data.trial{i},1) == 0,2);
+  for j=1:nchans
+    spikechan(j) = spikechan(j) + all(data.trial{i}(j,:)==0 | data.trial{i}(j,:)==1 | data.trial{i}(j,:)==2);
+  end
 end
-spikechan = (sum(sc,2)==ntrial);
+spikechan = (spikechan==ntrial);
 
 % determine the channels for interpolation
 cfg.channel = ft_channelselection(cfg.channel, data.label);

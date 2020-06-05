@@ -1,6 +1,7 @@
 function inspect_bug2588
 
-% DEPENDENCY ft_databrowser
+% TEST inspect_bug2588
+% TEST ft_databrowser
 
 data = [];
 for i=1:10

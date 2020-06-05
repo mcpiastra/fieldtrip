@@ -1,9 +1,9 @@
 function test_bug2363
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_selectdata ft_selectdata_new ft_freqstatistics ft_timelockstatistics
+% TEST test_bug2363 ft_selectdata ft_selectdata_new ft_freqstatistics ft_timelockstatistics
 
 %% make some data
 

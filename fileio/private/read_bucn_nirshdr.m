@@ -31,7 +31,7 @@ function [hdr] = read_bucn_nirshdr(filename)
 %
 % $Id: read_bucn_nirshdr.m$
 
-fid = fopen_or_error(filename, 'r');
+fid = fopen(filename, 'r');
 
 % read the first line
 line1 = textscan(fid, '%[^\n]',1);

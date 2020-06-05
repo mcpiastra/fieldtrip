@@ -35,24 +35,18 @@ function varargout = unparcellate(data, parcellation, parameter, parcelparam, va
 output = ft_getopt(varargin, 'output', 'data');
 
 if isstruct(data)
-  data_parcellated = getsubfield(data, parameter);
+  tmp = getsubfield(data, parameter);
 elseif size(parameter,2)==1
-  data_parcellated = data;
+  tmp = data;
   clear data;
   data.label = parameter;
-  data = setsubfield(data, parameter, data_parcellated);
+  data = setsubfield(data, parameter, tmp);
 elseif size(parameter,2)==2
   % this contains labelcmb e.g. pairwise granger
-  data_parcellated = data;
+  tmp = data;
   clear data;
   data.labelcmb = parameter;
-  data          = setsubfield(data, parameter, data_parcellated);
-end
-
-if ft_datatype(parcellation, 'volume')
-  nelements  = prod(parcellation.dim(1:3));
-elseif ft_datatype(parcellation, 'source')
-  nelements  = size(parcellation.pos,1);
+  data = setsubfield(data, parameter, tmp);
 end
 
 if isfield(data, 'label')
@@ -64,12 +58,11 @@ if isfield(data, 'label')
       dimtok = tokenize(dimord, '_');
       dimsiz = getdimsiz(data, parameter);
       % replace the number of parcels by the number of vertices in a parcel
-      dimsiz(strcmp(dimtok, 'chan')) = nelements;
+      dimsiz(strcmp(dimtok, 'chan')) = size(parcellation.pos,1);
       
       fun = nan(dimsiz);
       
       [parcelindx, chanindx] = match_str(parcellation.([parcelparam,'label']), data.label);
-      
       
       if numel(dimtok)>1 && strcmp(dimtok{1}, 'chan') && strcmp(dimtok{2}, 'chan')
         % chan_chan_xxx
@@ -79,22 +72,16 @@ if isfield(data, 'label')
             p2 = parcellation.(parcelparam)==parcelindx(j);
             c1 = chanindx(i);
             c2 = chanindx(j);
-            fun(p1,p2,:) = repmat(data_parcellated(c1,c2,:), [sum(p1) sum(p2) 1]);
+            fun(p1,p2,:) = repmat(tmp(c1,c2,:), [sum(p1) sum(p2) 1]);
           end
         end
       elseif strcmp(dimtok{1}, 'chan')
-        % reorder the parcellated data according to the order in the
-        % parcellation
-        data_parcellated = data_parcellated(chanindx, :); 
-        
-%         % chan_xxx
-%         for i=1:numel(parcelindx)
-%           p1 = parcellation.(parcelparam)==parcelindx(i);
-%           c1 = chanindx(i);
-%           fun(p1,:) = repmat(data_parcellated(c1,:), [sum(p1) 1]);
-%         end
-
-        fun(parcellation.(parcelparam)>0,:) = data_parcellated(parcellation.(parcelparam)(parcellation.(parcelparam)>0),:);
+        % chan_xxx
+        for i=1:numel(parcelindx)
+          p1 = parcellation.(parcelparam)==parcelindx(i);
+          c1 = chanindx(i);
+          fun(p1,:) = repmat(tmp(c1,:), [sum(p1) 1]);
+        end
       end
       varargout{1} = fun;
       
@@ -144,8 +131,8 @@ elseif isfield(data, 'labelcmb')
   
   if strcmp(directionality, 'both')
     % recurse and combine
-    fun1 = unparcellate(data_parcellated,parcellation,data.labelcmb,parcelparam,'avgoverref',avgoverref,'directionality','inflow');
-    fun2 = unparcellate(data_parcellated,parcellation,data.labelcmb,parcelparam,'avgoverref',avgoverref,'directionality','outflow');
+    fun1 = unparcellate(tmp,parcellation,data.labelcmb,parcelparam,'avgoverref',avgoverref,'directionality','inflow');
+    fun2 = unparcellate(tmp,parcellation,data.labelcmb,parcelparam,'avgoverref',avgoverref,'directionality','outflow');
     fun  = [fun1;fun2]; clear fun1 fun2;
     
   else
@@ -159,7 +146,7 @@ elseif isfield(data, 'labelcmb')
         sel2 = 1;
       end
       
-      tmpdat   = data_parcellated(sel,:);
+      tmpdat   = tmp(sel,:);
       tmplabel = labelcmb(sel,sel2);
       
       % recurse into unparcellate

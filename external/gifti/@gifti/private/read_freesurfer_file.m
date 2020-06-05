@@ -8,7 +8,7 @@ function this = read_freesurfer_file(filename)
 % Copyright (C) 2013 Wellcome Trust Centre for Neuroimaging
 
 % Guillaume Flandin
-% $Id: read_freesurfer_file.m 5322 2013-03-13 15:04:14Z guillaume $
+% $Id$
 
 
 fid = fopen(filename,'rt');

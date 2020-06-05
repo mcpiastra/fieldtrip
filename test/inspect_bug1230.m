@@ -1,6 +1,6 @@
 function inspect_bug1230
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
 % this is not really pertaining to a bug, but to a feature request.

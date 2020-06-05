@@ -1,6 +1,6 @@
 function test_tutorial_connectivity2
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
 % contains the code that is in the second part of the ocnnectivity

@@ -38,7 +38,7 @@ recursive = ft_getopt(varargin, 'recursive', false);
 if ischar(fields)
   fields = {fields};
 elseif ~iscell(fields)
-  ft_error('fields input argument must be a cell-array of strings or a single string');
+  ft_error('fields input argument must be a cell array of strings or a single string');
 end
 
 remove = intersect(fieldnames(s), fields);
@@ -50,13 +50,7 @@ if recursive
   fn = fieldnames(s);
   for i=1:numel(fn)
     if isstruct(s.(fn{i}))
-      if numel(s.(fn{i}))==1
-        s.(fn{i}) = removefields(s.(fn{i}), fields, varargin{:});
-      else
-        for j=1:numel(s.(fn{i}))
-          s.(fn{i})(j) = removefields(s.(fn{i})(j), fields, varargin{:});
-        end
-      end
+      s.(fn{i}) = removefields(s.(fn{i}), fields, varargin{:});
     end
   end
 end

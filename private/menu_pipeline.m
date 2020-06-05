@@ -1,5 +1,5 @@
 function menu_pipeline(handle, eventdata, varargin)
 
-% This is a call-back for MENU_FIELDTRIP
+% this is a call-back for the FieldTrip menu
 
 ft_analysispipeline([], varargin{1});

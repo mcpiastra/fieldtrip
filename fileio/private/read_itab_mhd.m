@@ -1,6 +1,6 @@
 function mhd = read_itab_mhd(filename)
 
-fid = fopen_or_error(filename, 'rb');
+fid = fopen(filename, 'rb');
 
 %  Name of structure
 mhd.stname = fread(fid, [1 10], 'uint8=>char');           %  Header identifier  (VP_BIOMAG)

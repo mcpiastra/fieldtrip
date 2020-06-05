@@ -3,7 +3,12 @@ function test_tutorial_beamformer20131122
 % MEM 10gb
 % WALLTIME 02:30:00
 
-% DEPENDENCY ft_sourceanalysis ft_prepare_leadfield
+% TEST ft_sourceanalysis ft_prepare_leadfield
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
+ft_default.feedback = 'no';
 
 % this test script represents the MATLAB code from http://www.fieldtriptoolbox.org/tutorial/beamformer
 % as downloaded from the wiki on 22 November 2013
@@ -59,18 +64,18 @@ vol = ft_prepare_headmodel(cfg, segmentedmri);
 
 cfg                 = [];
 cfg.grad            = freqPost.grad;
-cfg.headmodel       = vol;
+cfg.vol             = vol;
 cfg.reducerank      = 2;
 cfg.channel         = {'MEG','-MLP31', '-MLO12'};
-cfg.sourcemodel.resolution = 1;   % use a 3-D grid with a 1 cm resolution
-cfg.sourcemodel.unit       = 'cm';
+cfg.grid.resolution = 1;   % use a 3-D grid with a 1 cm resolution
+cfg.grid.unit       = 'cm';
 [grid] = ft_prepare_leadfield(cfg);
 
 cfg              = [];
 cfg.method       = 'dics';
 cfg.frequency    = 18;
-cfg.sourcemodel         = grid;
-cfg.headmodel    = vol;
+cfg.grid         = grid;
+cfg.vol          = vol;
 cfg.dics.projectnoise = 'yes';
 cfg.dics.lambda       = 0;
 
@@ -120,15 +125,15 @@ freqAll = ft_freqanalysis(cfg, dataAll);
 cfg              = [];
 cfg.method       = 'dics';
 cfg.frequency    = 18;
-cfg.sourcemodel         = grid;
-cfg.headmodel    = vol;
+cfg.grid         = grid;
+cfg.vol          = vol;
 cfg.dics.projectnoise = 'yes';
 cfg.dics.lambda       = '5%';
 cfg.dics.keepfilter   = 'yes';
 cfg.dics.realfilter   = 'yes';
 sourceAll = ft_sourceanalysis(cfg, freqAll);
 
-cfg.sourcemodel.filter = sourceAll.avg.filter;
+cfg.grid.filter = sourceAll.avg.filter;
 sourcePre_con  = ft_sourceanalysis(cfg, freqPre );
 sourcePost_con = ft_sourceanalysis(cfg, freqPost);
 

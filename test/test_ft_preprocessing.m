@@ -1,9 +1,9 @@
 function test_ft_preprocessing(datainfo, writeflag, version)
 
-% MEM 2gb
-% WALLTIME 00:20:00
+% MEM 1500mb
+% WALLTIME 00:10:00
 
-% DEPENDENCY ft_preprocessing ref_datasets
+% TEST ft_preprocessing ref_datasets
 
 % writeflag determines whether the output should be saved to disk
 % version determines the output directory
@@ -18,8 +18,7 @@ if nargin<3
   version = 'latest';
 end
 
-for k=1:numel(datainfo)
-  disp(['starting with k=' num2str(k)]);
+for k = 1:numel(datainfo)
   datanew = preprocessing10trials(datainfo(k), writeflag, version);
 
   fname = fullfile(datainfo(k).origdir,version,'raw',datainfo(k).type,['preproc_',datainfo(k).datatype]);
@@ -35,7 +34,7 @@ for k=1:numel(datainfo)
   % do the comparison with the header removed, the output argument still contains the header
   %assert(isequaln(data, datanew2));  
   [ok,msg] = isalmostequal(data, datanew2,'reltol',eps*1e6);
-  disp(['finished k=' num2str(k)]);
+  disp(['now you are in k=' num2str(k)]);
   if ~ok
     error('stored and computed data not identical: %s', msg{:});
   end

@@ -1,11 +1,9 @@
 function test_bug2727
 
 % WALLTIME 00:10:00
-% MEM 2gb
+% MEM 1gb
 
-% DEPENDENCY ft_clusterplot topoplot_common
-
-%%
+% TEST ft_clusterplot
 
 label = {
   'MLC11'    'MLC12'    'MLC13'    'MLC14'    'MLC15'    'MLC21'    'MLC22'    'MLC23'    'MLC24'    'MLC31'    'MLC32'    'MLC33'    'MLC41'    'MLC42' ...
@@ -80,8 +78,6 @@ statTF1.dimord = 'chan_freq_time';
 statTF1.posclusterslabelmat = statTF1.prob<0.05;
 statTF1.posclusters(1).prob = 0;
 
-%%
-
 cfg = [];
 cfg.layout = 'CTF151.lay';
 ft_clusterplot(cfg, stat);
@@ -97,3 +93,7 @@ catch
   failed = true;
 end
 assert(failed==true, 'this should have failed');
+
+
+
+

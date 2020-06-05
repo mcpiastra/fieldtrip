@@ -1,4 +1,4 @@
-function [object] = ft_convert_units(object, target, varargin)
+function [obj] = ft_convert_units(obj, target, varargin)
 
 % FT_CONVERT_UNITS changes the geometrical dimension to the specified SI unit.
 % The units of the input object is determined from the structure field
@@ -6,22 +6,22 @@ function [object] = ft_convert_units(object, target, varargin)
 % e.g. a volume conduction model of the head should be approximately 20 cm large.
 %
 % Use as
-%   [output] = ft_convert_units(input, target)
+%   [object] = ft_convert_units(object, target)
 %
-% The following input data structures are supported
+% The following geometrical objects are supported as inputs
 %   electrode or gradiometer array, see FT_DATATYPE_SENS
 %   volume conductor, see FT_DATATYPE_HEADMODEL
 %   anatomical mri, see FT_DATATYPE_VOLUME
 %   segmented mri, see FT_DATATYPE_SEGMENTATION
-%   source model, see FT_DATATYPE_SOURCE and FT_PREPARE_SOURCEMODEL
+%   dipole grid definition, see FT_DATATYPE_SOURCE
 %
-% The possible target units are 'm', 'dm', 'cm ' or 'mm'. If no target units are
-% specified, this function will only determine the geometrical units of the input
-% object.
+% Possible target units are 'm', 'dm', 'cm ' or 'mm'. If no target units
+% are specified, this function will only determine the native geometrical
+% units of the object.
 %
-% See also FT_DETERMINE_UNITS, FT_DETERMINE_COODSYS, FT_CONVERT_COORDSYS, FT_PLOT_AXES, FT_PLOT_XXX
+% See also FT_DETERMINE_UNITS, FT_CONVERT_COORDSYS, FT_DETERMINE_COODSYS
 
-% Copyright (C) 2005-2020, Robert Oostenveld
+% Copyright (C) 2005-2016, Robert Oostenveld
 %
 % This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
@@ -46,23 +46,36 @@ function [object] = ft_convert_units(object, target, varargin)
 %   2) determine the requested scaling factor to obtain the output units
 %   3) try to apply the scaling to the known geometrical elements in the input object
 
+% ensure the correct number of input and output arguments
+% narginchk(2,inf); % see below
+nargoutchk(0,1);
+
+% the "target" input argument has been made required in Aug 2017
+% prior to that it was also possible to use this function to estimate units
+% the backward compatibility support can be removed in Aug 2018
+if nargin<2
+  ft_warning('calling this function only to determine units is deprecated, please use FT_DETERMINE_COORDSYS instead');
+  obj = ft_determine_units(obj);
+  return
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % parse input options
 feedback = ft_getopt(varargin, 'feedback', false);
 
-if isstruct(object) && numel(object)>1
+if isstruct(obj) && numel(obj)>1
   % deal with a structure array
-  for i=1:numel(object)
-    tmp(i) = ft_convert_units(object(i), target, varargin{:});
+  for i=1:numel(obj)
+    tmp(i) = ft_convert_units(obj(i), target, varargin{:});
   end
-  object = tmp;
+  obj = tmp;
   return
-elseif iscell(object) && numel(object)>1
-  % deal with a cell-array
+elseif iscell(obj) && numel(obj)>1
+  % deal with a cell array
   % this might represent combined EEG, ECoG and/or MEG
-  for i=1:numel(object)
-    object{i} = ft_convert_units(object{i}, target, varargin{:});
+  for i=1:numel(obj)
+    obj{i} = ft_convert_units(obj{i}, target, varargin{:});
   end
   return
 end
@@ -70,121 +83,108 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % determine the units of the input object
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-object = ft_determine_units(object);
+obj = ft_determine_units(obj);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % compute the scaling factor from the input units to the desired ones
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if isempty(object) || isfield(object, 'unit') && isequal(object.unit, target)
+if isequal(obj.unit, target)
   % there is nothing to do
   return
 end
 
 if istrue(feedback)
   % give some information about the conversion
-  fprintf('converting units from ''%s'' to ''%s''\n', object.unit, target)
+  fprintf('converting units from ''%s'' to ''%s''\n', obj.unit, target)
 end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % apply the scaling factor
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-scale = ft_scalingfactor(object.unit, target);
+scale = ft_scalingfactor(obj.unit, target);
 
 % volume conductor model
-if isfield(object, 'r'), object.r = scale * object.r; end
-if isfield(object, 'o'), object.o = scale * object.o; end
-if isfield(object, 'bnd') && isfield(object.bnd, 'pnt')
-  for i=1:length(object.bnd)
-    object.bnd(i).pnt = scale * object.bnd(i).pnt;
+if isfield(obj, 'r'), obj.r = scale * obj.r; end
+if isfield(obj, 'o'), obj.o = scale * obj.o; end
+if isfield(obj, 'bnd') && isfield(obj.bnd, 'pnt')
+  for i=1:length(obj.bnd)
+    obj.bnd(i).pnt = scale * obj.bnd(i).pnt;
   end
 end
-if isfield(object, 'bnd') && isfield(object.bnd, 'pos')
-  for i=1:length(object.bnd)
-    object.bnd(i).pos = scale * object.bnd(i).pos;
+if isfield(obj, 'bnd') && isfield(obj.bnd, 'pos')
+  for i=1:length(obj.bnd)
+    obj.bnd(i).pos = scale * obj.bnd(i).pos;
   end
 end
 
 % old-fashioned gradiometer array
-if isfield(object, 'pnt1'), object.pnt1 = scale * object.pnt1; end
-if isfield(object, 'pnt2'), object.pnt2 = scale * object.pnt2; end
-if isfield(object, 'prj'),  object.prj  = scale * object.prj;  end
+if isfield(obj, 'pnt1'), obj.pnt1 = scale * obj.pnt1; end
+if isfield(obj, 'pnt2'), obj.pnt2 = scale * obj.pnt2; end
+if isfield(obj, 'prj'),  obj.prj  = scale * obj.prj;  end
 
 % gradiometer array, electrode array, head shape or dipole grid
-if isfield(object, 'pnt'),        object.pnt        = scale * object.pnt;        end
-if isfield(object, 'pos'),        object.pos        = scale * object.pos;        end
-if isfield(object, 'chanpos'),    object.chanpos    = scale * object.chanpos;    end
-if isfield(object, 'chanposorg'), object.chanposold = scale * object.chanposorg; end % pre-2016 version
-if isfield(object, 'chanposold'), object.chanposold = scale * object.chanposold; end % 2016 version and later
-if isfield(object, 'coilpos'),    object.coilpos    = scale * object.coilpos;    end
-if isfield(object, 'elecpos'),    object.elecpos    = scale * object.elecpos;    end
+if isfield(obj, 'pnt'),        obj.pnt        = scale * obj.pnt;        end
+if isfield(obj, 'pos'),        obj.pos        = scale * obj.pos;        end
+if isfield(obj, 'chanpos'),    obj.chanpos    = scale * obj.chanpos;    end
+if isfield(obj, 'chanposorg'), obj.chanposold = scale * obj.chanposorg; end % pre-2016 version
+if isfield(obj, 'chanposold'), obj.chanposold = scale * obj.chanposold; end % 2016 version and later
+if isfield(obj, 'coilpos'),    obj.coilpos    = scale * obj.coilpos;    end
+if isfield(obj, 'elecpos'),    obj.elecpos    = scale * obj.elecpos;    end
 
 % gradiometer array that combines multiple coils in one channel
-if isfield(object, 'tra') && isfield(object, 'chanunit')
+if isfield(obj, 'tra') && isfield(obj, 'chanunit')
   % find the gradiometer channels that are expressed as unit of field strength divided by unit of distance, e.g. T/cm
-  for i=1:length(object.chanunit)
-    tok = tokenize(object.chanunit{i}, '/');
-    if ~isempty(regexp(object.chanunit{i}, 'm$', 'once'))
+  for i=1:length(obj.chanunit)
+    tok = tokenize(obj.chanunit{i}, '/');
+    if ~isempty(regexp(obj.chanunit{i}, 'm$', 'once'))
       % assume that it is T/m or so
-      object.tra(i,:)    = object.tra(i,:) / scale;
-      object.chanunit{i} = [tok{1} '/' target];
-    elseif ~isempty(regexp(object.chanunit{i}, '[T|V]$', 'once'))
+      obj.tra(i,:)    = obj.tra(i,:) / scale;
+      obj.chanunit{i} = [tok{1} '/' target];
+    elseif ~isempty(regexp(obj.chanunit{i}, '[T|V]$', 'once'))
       % assume that it is T or V, don't do anything
-    elseif strcmp(object.chanunit{i}, 'unknown')
+    elseif strcmp(obj.chanunit{i}, 'unknown')
       % assume that it is T or V, don't do anything
-    elseif strcmp(object.chanunit{i}, 'snr')
-      %
     else
-      ft_error('unexpected units %s', object.chanunit{i});
+      ft_error('unexpected units %s', obj.chanunit{i});
     end
   end % for
 end % if
 
 % fiducials
-if isfield(object, 'fid') && isfield(object.fid, 'pnt'), object.fid.pnt = scale * object.fid.pnt; end
-if isfield(object, 'fid') && isfield(object.fid, 'pos'), object.fid.pos = scale * object.fid.pos; end
+if isfield(obj, 'fid') && isfield(obj.fid, 'pnt'), obj.fid.pnt = scale * obj.fid.pnt; end
+if isfield(obj, 'fid') && isfield(obj.fid, 'pos'), obj.fid.pos = scale * obj.fid.pos; end
 
 % dipole grid
-if isfield(object, 'resolution'), object.resolution = scale * object.resolution; end
+if isfield(obj, 'resolution'), obj.resolution = scale * obj.resolution; end
 
 % x,y,zgrid can also be 'auto'
-if isfield(object, 'xgrid') && ~ischar(object.xgrid), object.xgrid = scale * object.xgrid; end
-if isfield(object, 'ygrid') && ~ischar(object.ygrid), object.ygrid = scale * object.ygrid; end
-if isfield(object, 'zgrid') && ~ischar(object.zgrid), object.zgrid = scale * object.zgrid; end
+if isfield(obj, 'xgrid') && ~ischar(obj.xgrid), obj.xgrid = scale * obj.xgrid; end
+if isfield(obj, 'ygrid') && ~ischar(obj.ygrid), obj.ygrid = scale * obj.ygrid; end
+if isfield(obj, 'zgrid') && ~ischar(obj.zgrid), obj.zgrid = scale * obj.zgrid; end
 
 % anatomical MRI or functional volume
-if isfield(object, 'transform')
+if isfield(obj, 'transform')
   H = diag([scale scale scale 1]);
-  object.transform = H * object.transform;
+  obj.transform = H * obj.transform;
 end
 
-if isfield(object, 'transformorig')
+if isfield(obj, 'transformorig')
   H = diag([scale scale scale 1]);
-  object.transformorig = H * object.transformorig;
-end
-
-% remove initial and params structure if they exist
-if isfield(object, 'initial') && ~strcmp(target, 'mm')
-  object = rmfield(object, 'initial');
-  ft_warning('Removing field "initial" because potential transformations of normalised volumes only work if geometrical values are expressed in "mm"');
-end
-
-if isfield(object, 'params') && ~strcmp(target, 'mm')
-  ft_warning('Removing field "params" because potential transformations of normalised volumes only work if geometrical values are expressed in "mm"');
-  object = rmfield(object, 'params');
+  obj.transformorig = H * obj.transformorig;
 end
 
 % sourcemodel obtained through mne also has a orig-field with the high
 % number of vertices
-if isfield(object, 'orig')
-  if isfield(object.orig, 'pnt')
-    object.orig.pnt = scale * object.orig.pnt;
+if isfield(obj, 'orig')
+  if isfield(obj.orig, 'pnt')
+    obj.orig.pnt = scale * obj.orig.pnt;
   end
-  if isfield(object.orig, 'pos')
-    object.orig.pos = scale * object.orig.pos;
+  if isfield(obj.orig, 'pos')
+    obj.orig.pos = scale * obj.orig.pos;
   end
 end
 
 % remember the unit
-object.unit = target;
+obj.unit = target;

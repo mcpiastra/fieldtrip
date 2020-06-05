@@ -1,7 +1,7 @@
 function y = istrue(x)
 
-% ISTRUE converts an input argument like "yes/no", "true/false" or "on/off" into a
-% boolean. If the input is boolean, then it will remain like that.
+% ISTRUE ensures that a true/false input argument like "yes", "true"
+% or "on" is converted into a boolean
 
 % Copyright (C) 2009-2012, Robert Oostenveld
 %

@@ -1,8 +1,10 @@
 function test_tutorial_networkanalysis
 
-% MEM 3gb
+% MEM 3000mb
 % WALLTIME 00:30:00
-% DEPENDENCY ft_networkanalysis
+
+% TEST test_tutorial_networkanalysis
+% TEST ft_networkanalysis
 
 %% read the continuous data and segment into 2 seconds epochs
 cfg = [];
@@ -123,9 +125,9 @@ subplot(2,1,2); ft_singleplotER(cfg, fft_data);
 % 
 % %% compute the source model 
 % cfg = [];
-% cfg.sourcemodel.warpmni   = 'yes';
-% cfg.sourcemodel.template  = template.sourcemodel;
-% cfg.sourcemodel.nonlinear = 'yes'; % use non-linear normalization
+% cfg.grid.warpmni   = 'yes';
+% cfg.grid.template  = template.sourcemodel;
+% cfg.grid.nonlinear = 'yes'; % use non-linear normalization
 % cfg.mri            = mri;
 % sourcemodel        = ft_prepare_sourcemodel(cfg);
 
@@ -136,7 +138,7 @@ load sourcemodel_4k
 figure;
 
 % make the headmodel surface transparent
-ft_plot_headmodel(hdm, 'edgecolor', 'none');
+ft_plot_vol(hdm, 'edgecolor', 'none');
 alpha 0.4           
 
 % add the source model positions and sensors
@@ -156,7 +158,7 @@ freq           = ft_freqanalysis(cfg, dataica);
 
 %% compute the leadfield
 cfg             = [];
-cfg.sourcemodel        = sourcemodel;
+cfg.grid        = sourcemodel;
 cfg.headmodel   = hdm;
 cfg.channel     = {'MEG'};
 lf = ft_prepare_leadfield(cfg, freq);
@@ -166,7 +168,7 @@ cfg                   = [];
 cfg.frequency         = freq.freq;
 cfg.grad              = freq.grad;
 cfg.method            = 'pcc';
-cfg.sourcemodel              = lf;
+cfg.grid              = lf;
 cfg.headmodel         = hdm;
 cfg.keeptrials        = 'yes';
 cfg.pcc.lambda        = '10%';
@@ -341,7 +343,7 @@ cfg                   = [];
 cfg.frequency         = freq.freq;
 cfg.grad              = freq.grad;
 cfg.method            = 'pcc';
-cfg.sourcemodel              = lf;
+cfg.grid              = lf;
 cfg.headmodel         = hdm;
 cfg.keeptrials        = 'yes';
 cfg.pcc.lambda        = '5%';
@@ -354,8 +356,8 @@ cfg                   = [];
 cfg.frequency         = freq.freq;
 cfg.grad              = freq.grad;
 cfg.method            = 'pcc';
-cfg.sourcemodel              = lf;
-cfg.sourcemodel.filter       = source.avg.filter;
+cfg.grid              = lf;
+cfg.grid.filter       = source.avg.filter;
 cfg.headmodel         = hdm;
 cfg.keeptrials        = 'yes';
 cfg.pcc.lambda        = '5%';

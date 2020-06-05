@@ -1,9 +1,9 @@
 function test_bug2874
 
 % WALLTIME 00:10:100
-% MEM 1gb
+% MEM 1000mb
 
-% DEPENDENCY ft_sourcegrandaverage
+% TEST ft_sourcegrandaverage
 
 pos = randn(19344, 3);
 nsubj = 3;

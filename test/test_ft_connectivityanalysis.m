@@ -1,15 +1,18 @@
 function test_ft_connectivityanalysis
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_connectivityanalysis ft_connectivity_granger ft_connectivity_corr ft_connectivity_psi ft_mvaranalysis ft_connectivitysimulation ft_freqanalysis ft_connectivity_pdc ft_connectivity_dtf ft_connectivity_csd2transfer
+% TEST ft_connectivityanalysis ft_connectivity_granger ft_connectivity_corr ft_connectivity_psi ft_mvaranalysis ft_connectivitysimulation ft_freqanalysis ft_connectivity_pdc ft_connectivity_dtf ft_connectivity_csd2transfer
 
 % this function tests the functionality of FT_CONNECTIVITYANALYSIS
 % on frequency domain channel data
 
 % apart from using FT_CONNECTIVITYANALYSIS, it also relies on
 % FT_CONNECTIVITYSIMULATION, FT_FREQANALYSIS, FT_MVARANALYSIS
+
+global ft_default;
+ft_default.feedback = 'no';
 
 % first create some data
 %--------------------------------------------------------
@@ -235,10 +238,7 @@ cfgf.method    = 'mtmfft';
 cfgf.output    = 'fourier';
 cfgf.tapsmofrq = 2;
 freq           = ft_freqanalysis(cfgf, data);
-
-tmpcfg = [];
-tmpcfg.frequency = freq.freq([2 end]);
-freqsub        = ft_selectdata(tmpcfg, freq);
+freqsub        = ft_selectdata(freq, 'foilim', freq.freq(2:end));
 
 % connectivityanalysis
 cfgc           = [];
@@ -507,16 +507,3 @@ g3               = ft_connectivityanalysis(cfgc, freq);
 cfgc.granger.conditional = 'yes';
 g4               = ft_connectivityanalysis(cfgc, freq);
 
-% make the blocks a bit more funky
-cfgc.granger.block(1).name =  'block1';
-cfgc.granger.block(1).label = freq.label(1:2);
-cfgc.granger.block(2).name = 'block2';
-cfgc.granger.block(2).label = freq.label(3:5);
-cfgc.granger.block(3).name = 'block3';
-cfgc.granger.block(3).label = freq.label(6:7);
-cfgc.granger.block(4).name = 'block4';
-cfgc.granger.block(4).label = freq.label(8);
-cfgc.granger.conditional = 'no';
-g5               = ft_connectivityanalysis(cfgc, freq);
-cfgc.granger.conditional = 'yes';
-g6               = ft_connectivityanalysis(cfgc, freq);

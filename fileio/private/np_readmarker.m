@@ -29,9 +29,9 @@ function [np_marker] = np_readmarker (filename, idx_begin, data_length, option)
 %
 %   np_marker        -   structure
 %
-%      np_marker.markernames   -   cell-array with markernames 
+%      np_marker.markernames   -   cell array with markernames 
 %      np_marker.markertyp     -   vector array with markertypes
-%      np_marker.marker        -   cell-array with marker vectors 
+%      np_marker.marker        -   cell array with marker vectors 
 %                                  ( = sample indices if option = 'samples',
 %                                    = time indices if option = 'time');
 %
@@ -77,7 +77,10 @@ else
 end
 
 % Markeranzahl auslesen, Strukturen und cell-Arrays definieren 
-fid=fopen_or_error([filename(1:length(filename)-1) '_'],'r');
+fid=fopen([filename(1:length(filename)-1) '_'],'r');
+if fid==-1,
+    ft_error(['Unable to open file "' [filename(1:length(filename)-1) '_'] '" . Error code: ' ferror(fid)]);
+end
 try
     s=fscanf(fid,'%c',inf);
     fclose(fid);
@@ -107,10 +110,10 @@ for i=1:Anzahl_Marker
     end
 end
 
-% Indexzeilen lesen und aneinanderhï¿½ngen
+% Indexzeilen lesen und aneinanderhängen
 % z.B. Index1=16518:0(Neu;Fp1#Fp1-REF_EEG;Fp2#F.....
 % z.B. Index2=70:0(Neu;FB)|4:612|9:1616(100%)|3:2292|8:...
-% Blï¿½cke mit "|" einklammern
+% Blöcke mit "|" einklammern
 Index_Index=strfind(s,'Index');
 IndexZeile=[];
 for i=1:length(Index_Index)
@@ -144,7 +147,7 @@ for b=1:Anzahl_Bloecke
     Block=IndexZeile(BlockIndex(b)+1:BlockIndex(b+1)-1);
    
     % MarkerTyp ermitteln (z.B. 3, 70, 16518, ...)
-    % mehrer Doppelpunkte kï¿½nnen im Block vorkommen
+    % mehrer Doppelpunkte können im Block vorkommen
     doppelpunkt=find(Block==':');
     if isempty(doppelpunkt),
         MarkerTyp=last_MarkerTyp;
@@ -153,7 +156,7 @@ for b=1:Anzahl_Bloecke
         MarkerTyp=str2num(Block(1:doppelpunkt(1)-1));
     end
     
-    % prï¿½fen, ob es ein Artefakttrial ist
+    % prüfen, ob es ein Artefakttrial ist
     if strcmp(Block(doppelpunkt(1)+1),'<')==1,
         Artefakttrial=1;
     else
@@ -161,7 +164,7 @@ for b=1:Anzahl_Bloecke
     end
     
     % SampleIndex ermitteln, dabei nur Ziffern von 0...9
-    % berï¿½cksichtigen
+    % berücksichtigen
     %   double('0') = 48
     %   double('1') = 49
     %   ...
@@ -183,29 +186,29 @@ for b=1:Anzahl_Bloecke
     end
     SampleIndex=str2num(SampleIndexString);
     
-    % Behandlung des Markertyps hï¿½ngt vom Markertyp ab
+    % Behandlung des Markertyps hängt vom Markertyp ab
     % a) unbekannter Markertyp: keine Behandlung
     % b) bekannter Markertyp und MarkerTyp nicht in Menge: [1 2 3 4 6 7 8 9]
     %    --> SampleIndex in entsprechenden Markertypen eintragen
     % c) Markertyp = [6 oder 7 oder 8 oder 9] (='FBQuote+', 'FBQuote-','TRQuote+' oder 'TRQuote-')
     %    --> wenn kein Artefakt und vorhergehender Marker <> 'Pause'
-    %        dann Sampleindizes fï¿½r aktuellen und vorhergehenden Marker in np_marker
+    %        dann Sampleindizes für aktuellen und vorhergehenden Marker in np_marker
     %        eintragen
     %        d.h. Artefakttrials werden nicht ausgelesen, 
     %        d.h. Trials mit Pausen werden nicht gelesen
     %        d.h. Trials mit vorzeitiger Beendigung werden nicht
-    %        berï¿½cksichtigt
-    % Zusï¿½tzlich: letzten Feedbackmarker merken, wenn FB+, FB-, TR+ oder
+    %        berücksichtigt
+    % Zusätzlich: letzten Feedbackmarker merken, wenn FB+, FB-, TR+ oder
     % TR-Trial gefunden wurde
     %
-    % frï¿½here Version (1.1): hier wurde der Vergleich mit:
+    % frühere Version (1.1): hier wurde der Vergleich mit:
     %       strcmp(upper(MarkerName),'FBQUOTE+')==1 oder ...
-    %       durchgefï¿½hrt; jetzt traten EE_-Dateien auf, in 
+    %       durchgeführt; jetzt traten EE_-Dateien auf, in 
     %       denen anstatt "Quote" das Wort "Qoute" stand -> Fehlermeldung
     %       bzw. falsche Marker werden ausgelesen
-    %       auï¿½erdem werden in Zukunft die Trialanfang- und -endemarker
-    %       anders heiï¿½en, nur die Zuordnung des Markertyps bleibt;
-    %       deshalb ab Version 1.2. (19.01.2005): Vergleiche ï¿½ber
+    %       außerdem werden in Zukunft die Trialanfang- und -endemarker
+    %       anders heißen, nur die Zuordnung des Markertyps bleibt;
+    %       deshalb ab Version 1.2. (19.01.2005): Vergleiche über
     %       Markertypen 1-4 und 6-9 (bleiben fest).
     %       MarkerTyp 1:    TR+
     %       MarkerTyp 2:    TR-
@@ -218,18 +221,18 @@ for b=1:Anzahl_Bloecke
     
     %
     % MarkerTyp kann [] sein, z. B. bei Markern, die nicht mit Namen
-    % aufgelistet wurden (z. B. 16518:...); dann nï¿½chsten Block lesen
+    % aufgelistet wurden (z. B. 16518:...); dann nächsten Block lesen
     if isempty(MarkerTyp),
         continue;
     end
     idx=find(np_marker.markertyp==MarkerTyp);
     %
-    % Ergï¿½nzung: 16.2.2005
+    % Ergänzung: 16.2.2005
     %
     if length(idx)>1,
         ft_error(['Typ ' num2str(MarkerTyp) ' was found ' num2str(length(idx)) ' times in np_marker.markernames.']);
     end
-    if ~isempty(idx),       % Fall a) ausschlieï¿½en
+    if ~isempty(idx),       % Fall a) ausschließen
         MarkerName=np_marker.markernames{idx};
         if (0==ismember(MarkerTyp,[1 2 3 4 6 7 8 9])),
             % Fall b)

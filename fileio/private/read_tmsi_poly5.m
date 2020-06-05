@@ -27,7 +27,7 @@ if needdat
   endblock = varargin{3};
 end
 
-fid = fopen_or_error(filename, 'rb');
+fid = fopen(filename, 'rb');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % read the header

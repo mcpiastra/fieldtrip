@@ -2,7 +2,8 @@ function failed_bug1988
 
 % MEM 3gb
 % WALLTIME 00:45:00
-% DEPENDENCY ft_volumesegment ft_prepare_headmodel
+
+% TEST test_bug1988 ft_volumesegment ft_prepare_headmodel
 
 %% segmentedmri.mat
 % from current version may not match what is on the ftp for tutorials

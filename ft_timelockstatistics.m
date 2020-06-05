@@ -70,7 +70,6 @@ ft_preamble debug
 ft_preamble loadvar varargin
 ft_preamble provenance varargin
 ft_preamble trackconfig
-ft_preamble randomseed
 
 % the ft_abort variable is set to true or false in ft_preamble_init
 if ft_abort
@@ -105,22 +104,20 @@ if isempty(cfg.parameter)
 end
 
 % ensure that the data in all inputs has the same channels, time-axis, etc.
-tmpcfg = keepfields(cfg, {'latency', 'avgovertime', 'channel', 'avgoverchan', 'parameter', 'showcallinfo', 'select', 'nanmean'});
+tmpcfg = keepfields(cfg, {'latency', 'avgovertime', 'channel', 'avgoverchan', 'parameter', 'showcallinfo'});
 [varargin{:}] = ft_selectdata(tmpcfg, varargin{:});
 % restore the provenance information
 [cfg, varargin{:}] = rollback_provenance(cfg, varargin{:});
 
-% neighbours are required for clustering with multiple channels
 if strcmp(cfg.correctm, 'cluster') && length(varargin{1}.label)>1
-  % this is limited to reading neighbours from disk and/or selecting channels
-  % the user should call FT_PREPARE_NEIGHBOURS directly for the actual construction
-  tmpcfg = keepfields(cfg, {'neighbours', 'channel', 'showcallinfo'});
-  cfg.neighbours = ft_prepare_neighbours(tmpcfg);
+  % this is required for clustering with multiple channels
+  ft_checkconfig(cfg, 'required', 'neighbours');
 end
 
 dimord = getdimord(varargin{1}, cfg.parameter);
 dimtok = tokenize(dimord, '_');
-dimsiz = getdimsiz(varargin{1}, cfg.parameter, numel(dimtok));
+dimsiz = getdimsiz(varargin{1}, cfg.parameter);
+dimsiz(end+1:length(dimtok)) = 1; % there can be additional trailing singleton dimensions
 rptdim = find( strcmp(dimtok, 'subj') |  strcmp(dimtok, 'rpt') |  strcmp(dimtok, 'rpttap'));
 datdim = find(~strcmp(dimtok, 'subj') & ~strcmp(dimtok, 'rpt') & ~strcmp(dimtok, 'rpttap'));
 datsiz = dimsiz(datdim);
@@ -158,13 +155,13 @@ end
 
 design = cfg.design;
 
-% fetch function handle to the intermediate-level statistics function
-statmethod = ft_getuserfun(cfg.method, 'statistics');
-if isempty(statmethod)
-  ft_error('could not find the corresponding function for cfg.method="%s"\n', cfg.method);
+% determine the function handle to the intermediate-level statistics function
+if exist(['ft_statistics_' cfg.method], 'file')
+  statmethod = str2func(['ft_statistics_' cfg.method]);
 else
-  fprintf('using "%s" for the statistical testing\n', func2str(statmethod));
+  ft_error('could not find the corresponding function for cfg.method="%s"\n', cfg.method);
 end
+fprintf('using "%s" for the statistical testing\n', func2str(statmethod));
 
 % check that the design completely describes the data
 if size(dat,2) ~= size(cfg.design,2)
@@ -180,11 +177,22 @@ catch
 end
 
 % perform the statistical test
-if num>1
-  [stat, cfg] = statmethod(cfg, dat, design);
-  cfg         = rollback_provenance(cfg); % ensure that changes to the cfg are passed back to the right level
+if strcmp(func2str(statmethod),'ft_statistics_montecarlo')
+  % because ft_statistics_montecarlo (or to be precise, clusterstat) requires to know whether it is getting source data,
+  % the following (ugly) work around is necessary
+  if num>1
+    [stat, cfg] = statmethod(cfg, dat, design);
+    cfg         = rollback_provenance(cfg); % ensure that changes to the cfg are passed back to the right level
+  else
+    [stat] = statmethod(cfg, dat, design);
+  end
 else
-  [stat] = statmethod(cfg, dat, design);
+  if num>1
+    [stat, cfg] = statmethod(cfg, dat, design);
+    cfg         = rollback_provenance(cfg); % ensure that changes to the cfg are passed back to the right level
+  else
+    [stat] = statmethod(cfg, dat, design);
+  end
 end
 
 if ~isstruct(stat)
@@ -192,32 +200,8 @@ if ~isstruct(stat)
   stat = struct('prob', stat);
 end
 
-
-% overrule the 'datsiz' if stat has a (possibly updated) dim field
-if isfield(stat, 'dim')
-  datsiz = stat.dim;
-  stat = rmfield(stat, 'dim');
-end
-
-% describe the dimensions of the output data
-if ~isfield(stat, 'dimord')
-  stat.dimord = cfg.dimord;
-end
-
 % the statistical output contains multiple elements, e.g. F-value, beta-weights and probability
 fn = fieldnames(stat);
-
-% JM HACK:
-if ~isequal(datsiz, cfg.dim),
-  % the cfg.dim has been updated by the low-level function, let this one
-  % take precedence
-  datsiz = cfg.dim;
-end
-if ~isequal(varargin{1}.label, cfg.channel)
-  % the cfg.channel has been updated by the low-level function, let this
-  % one take precedence
-  varargin{1}.label = cfg.channel;
-end
 
 for i=1:length(fn)
   if numel(stat.(fn{i}))==prod(datsiz)
@@ -226,20 +210,17 @@ for i=1:length(fn)
   end
 end
 
-% copy the descripive fields into the output, but only if these are not
-% present (and possibly updated by the statmethod-function
-fieldstobecopied = {'time' 'label' 'elec', 'grad', 'opto'};
-if isfield(stat, 'time'),  fieldstobecopied = fieldstobecopied(~ismember(fieldstobecopied, 'time'));  end
-if isfield(stat, 'label'), fieldstobecopied = fieldstobecopied(~ismember(fieldstobecopied, 'label')); end
+% describe the dimensions of the output data
+stat.dimord = cfg.dimord;
 
-stat = copyfields(varargin{1}, stat, fieldstobecopied);
+% copy the descripive fields into the output
+stat = copyfields(varargin{1}, stat, {'time', 'label'});
 
 % these were only present to inform the low-level functions
 cfg = removefields(cfg, {'dim', 'dimord'});
 
 % do the general cleanup and bookkeeping at the end of the function
 ft_postamble debug
-ft_postamble randomseed
 ft_postamble trackconfig
 ft_postamble previous   varargin
 ft_postamble provenance stat

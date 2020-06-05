@@ -20,7 +20,7 @@ function h = ft_plot_line(X, Y, varargin)
 %   'hlim'            = horizontal scaling limits within the local axes
 %   'vlim'            = vertical scaling limits within the local axes
 %
-% See also FT_PLOT_BOX, FT_PLOT_CROSSHAIR
+% See also FT_PLOT_BOX
 
 % Copyrights (C) 2009-2011, Robert Oostenveld
 %
@@ -67,27 +67,29 @@ if isempty(hlim) && isempty(vlim) && isempty(hpos) && isempty(vpos) && isempty(h
   
 else
   % use the full implementation
+  abc = axis;
+  
   if isempty(hlim)
-    hlim = get(gca, 'XLim');
+    hlim = abc([1 2]);
   end
   
   if isempty(vlim)
-    vlim = get(gca, 'YLim');
+    vlim = abc([3 4]);
   end
   
-  if isempty(hpos)
+  if isempty(hpos);
     hpos = (hlim(1)+hlim(2))/2;
   end
   
-  if isempty(vpos)
+  if isempty(vpos);
     vpos = (vlim(1)+vlim(2))/2;
   end
   
-  if isempty(width)
+  if isempty(width),
     width = hlim(2)-hlim(1);
   end
   
-  if isempty(height)
+  if isempty(height),
     height = vlim(2)-vlim(1);
   end
   
@@ -114,4 +116,4 @@ end % shortcut
 h = line(X, Y, 'Color', color, 'LineStyle', linestyle, 'LineWidth', linewidth);
 set(h, 'tag', tag);
 
-warning(ws); % revert to original state
+warning(ws); %revert to original state

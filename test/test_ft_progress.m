@@ -1,9 +1,9 @@
 function test_ft_progress
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_progress
+% TEST ft_progress
 
 % testing parameters
 pause_delay = 0.01;

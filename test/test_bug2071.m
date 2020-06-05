@@ -4,8 +4,8 @@ function test_bug2071
 % MEM 1gb
 
 
-% DEPENDENCY ft_postamble
-% DEPENDENCY ft_postamble_history
+% TEST ft_postamble
+% TEST ft_postamble_history
 
 data1 = [];
 data1.label = {'1', '2', '3', '4'};

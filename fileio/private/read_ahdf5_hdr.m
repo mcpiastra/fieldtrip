@@ -52,12 +52,12 @@ if ~isempty(datafile),
       header.channels(i).ox = ox(i);
       header.channels(i).oy = oy(i);
       header.channels(i).oz = oz(i);     
-      % create label cell-array
+      % create label cell array
       header.label{i} =  header.channels(i).label;
-      % create reference cell-array
+      % create reference cell array
       header.reference{i} = header.channels(i).ref;
       % create chantype
-      if  strcmp(header.channels(i).unit, 'ï¿½V')
+      if  strcmp(header.channels(i).unit, 'µV')
           header.unit{i} = 'uV';
       else
           header.unit{i} = header.channels(i).unit;

@@ -1,12 +1,12 @@
 function test_headmodel_dipoli
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_headmodel_dipoli ft_prepare_vol_sens ft_compute_leadfield
+% TEST ft_headmodel_dipoli ft_prepare_vol_sens ft_compute_leadfield
 
 % generate a unit sphere
-[pnt, tri] = mesh_sphere(162);
+[pnt, tri] = icosahedron162;
 
 % create the BEM geometries
 geom = [];

@@ -1,13 +1,17 @@
-% function test_bug1309
+function test_bug1309
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
+
 
 % This tests for the reliability of the ft_convert_units function when dealing
 % with different input types (vol,sens,etc.)
 
+global ft_default;
+ft_default.feedback = 'no';
+
 % artificially create timelock data
-timelock_data.fsample = 500;
+timelock_data.fsamepl = 500;
 timelock_data.dimord = 'chan_time';
 timelock_data.time = zeros(1, 500);
 timelock_data.avg = randn(31, 500);
@@ -16,7 +20,7 @@ for i = 1:31
 end
 
 elec      = ft_read_sens('standard_1020.elc');
-headmodel = ft_read_headmodel('standard_bem.mat');
+headmodel = ft_read_vol('standard_bem.mat');
 
 timelock_data.label = elec.label(1:31);
 
@@ -27,18 +31,11 @@ cfg.numdipoles = 1;
 
 % the grid resolution remains the same, regardless of the electrode and headmodel units
 % the output source model units should be consistent with the ones specified here (and not with elec or headmodel)
-cfg.sourcemodel.resolution = 3;
-cfg.sourcemodel.unit = 'cm';
+cfg.grid.resolution = 3;
+cfg.grid.unit = 'cm';
 
 elecunit      = {'mm', 'cm', 'm', 'inch'};
 headmodelunit = {'mm', 'cm', 'm', 'feet'};
-
-fprintf('=================================================================================\n');
-fprintf('first run to warm-up and precompile\n');
-fprintf('=================================================================================\n');
-cfg.elec      = ft_convert_units(elec,      elecunit{1});
-cfg.headmodel = ft_convert_units(headmodel, headmodelunit{1});
-ft_dipolefitting(cfg, timelock_data);
 
 for i=1:numel(elecunit)
   for j=1:numel(headmodelunit)
@@ -69,3 +66,4 @@ for i=1:numel(elecunit)
     end
   end
 end
+

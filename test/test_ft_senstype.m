@@ -1,9 +1,9 @@
 function test_ft_senstype
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_senstype
+% TEST ft_senstype
 
 % ft_senstype can work on different input data structures. Here, use the
 % preprocessed data on /home/common/matlab/fieldtrip/test/raw/

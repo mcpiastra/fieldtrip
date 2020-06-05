@@ -1,13 +1,13 @@
 function test_bug1254
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
 % the bug has not been fixed yet, so there is no point in automatically
 % executing this test
 return
 
-% DEPENDENCY qsubcompile qsubcellfun
+% TEST qsubcompile qsubcellfun
 
 dataset = dccnpath('/home/common/matlab/fieldtrip/data/Subject01.ds');
 

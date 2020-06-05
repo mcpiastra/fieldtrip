@@ -4,7 +4,7 @@ function [comp] = ft_componentanalysis(cfg, data)
 % spatio-temporal decompositions of EEG or MEG data. This function computes
 % the topography and timecourses of the components. The output of this
 % function can be further analyzed with FT_TIMELOCKANALYSIS or
-% FT_FREQANALYSIS.
+% FT_FREQNANALYSIS.
 %
 % Use as
 %   [comp] = ft_componentanalysis(cfg, data)
@@ -208,7 +208,7 @@ if isfield(cfg, 'topo') && isfield(cfg, 'topolabel')
   ft_warning(['Specifying cfg.topo (= mixing matrix) to determine component '...
     'timecourses in specified data is deprecated; please specify an '...
     'unmixing matrix instead with cfg.unmixing. '...
-    'Using cfg.unmixing=pinv(cfg.topo) for now to reproduce old behavior.']);
+    'Using cfg.unmixing=pinv(cfg.topo) for now to reproduce old behaviour.']);
   
   cfg.unmixing = pinv(cfg.topo);
   cfg = rmfield(cfg, 'topo');
@@ -258,9 +258,6 @@ switch cfg.method
     cfg.dss.denf          = ft_getopt(cfg.dss,      'denf',     []);
     cfg.dss.denf.function = ft_getopt(cfg.dss.denf, 'function', 'denoise_fica_tanh');
     cfg.dss.denf.params   = ft_getopt(cfg.dss.denf, 'params',   []);
-    cfg.dss.preprocf      = ft_getopt(cfg.dss,      'preprocf', []);
-    cfg.dss.preprocf.function = ft_getopt(cfg.dss.preprocf, 'function', 'pre_sphere');
-    cfg.dss.preprocf.params   = ft_getopt(cfg.dss.preprocf, 'params', []);
   case 'csp'
     % additional options, see CSP for details
     cfg.csp = ft_getopt(cfg, 'csp', []);
@@ -279,8 +276,10 @@ switch cfg.method
 end
 
 % select trials of interest
-tmpcfg = keepfields(cfg, {'trials', 'channel', 'showcallinfo'});
-data   = ft_selectdata(tmpcfg, data);
+tmpcfg = [];
+tmpcfg.trials = cfg.trials;
+tmpcfg.channel = cfg.channel;
+data = ft_selectdata(tmpcfg, data);
 % restore the provenance information
 [cfg, data] = rollback_provenance(cfg, data);
 
@@ -306,7 +305,7 @@ end
 
 if strcmp(cfg.demean, 'yes')
   % optionally perform baseline correction on each trial
-  ft_info('baseline correcting data \n');
+  fprintf('baseline correcting data \n');
   for trial=1:Ntrials
     data.trial{trial} = ft_preproc_baselinecorrect(data.trial{trial});
   end
@@ -315,36 +314,34 @@ end
 if strcmp(cfg.doscale, 'yes')
   % determine the scaling of the data, scale it to approximately unity
   % this will improve the performance of some methods, esp. fastica
-  tmp                 = data.trial{1};
-  tmp(~isfinite(tmp)) = 0; % ensure that the scaling is a finite value
-  scale = norm((tmp*tmp')./size(tmp,2)); clear tmp;
+  scale = norm((data.trial{1}*data.trial{1}')./size(data.trial{1},2));
   scale = sqrt(scale);
   if scale ~= 0
-    ft_info('scaling data with 1 over %f\n', scale);
+    fprintf('scaling data with 1 over %f\n', scale);
     for trial=1:Ntrials
       data.trial{trial} = data.trial{trial} ./ scale;
     end
   else
-    ft_info('no scaling applied, since factor is 0\n');
+    fprintf('no scaling applied, since factor is 0\n');
   end
 else
-  ft_info('no scaling applied to the data\n');
+  fprintf('no scaling applied to the data\n');
 end
 
 if strcmp(cfg.method, 'sobi')
   
   % concatenate all the data into a 3D matrix respectively 2D (sobi)
-  ft_info('concatenating data');
+  fprintf('concatenating data');
   Nsamples = Nsamples(1);
   dat = zeros(Ntrials, Nchans, Nsamples);
   % all trials should have an equal number of samples
   % and it is assumed that the time axes of all trials are aligned
   for trial=1:Ntrials
-    ft_info('.');
+    fprintf('.');
     dat(trial,:,:) = data.trial{trial};
   end
-  ft_info('\n');
-  ft_info('concatenated data matrix size %dx%dx%d\n', size(dat,1), size(dat,2), size(dat,3));
+  fprintf('\n');
+  fprintf('concatenated data matrix size %dx%dx%d\n', size(dat,1), size(dat,2), size(dat,3));
   if Ntrials == 1
     dummy = 0;
     [dat, dummy] = shiftdim(dat);
@@ -365,39 +362,32 @@ elseif strcmp(cfg.method, 'csp')
   end
   dat1 = cat(2, data.trial{sel1});
   dat2 = cat(2, data.trial{sel2});
-  ft_info('concatenated data matrix size for class 1 is %dx%d\n', size(dat1,1), size(dat1,2));
-  ft_info('concatenated data matrix size for class 2 is %dx%d\n', size(dat2,1), size(dat2,2));
+  fprintf('concatenated data matrix size for class 1 is %dx%d\n', size(dat1,1), size(dat1,2));
+  fprintf('concatenated data matrix size for class 2 is %dx%d\n', size(dat2,1), size(dat2,2));
   
 elseif ~strcmp(cfg.method, 'predetermined unmixing matrix') && strcmp(cfg.cellmode, 'no')
   % concatenate all the data into a 2D matrix unless we already have an
   % unmixing matrix or unless the user request it otherwise
-  ft_info('concatenating data');
+  fprintf('concatenating data');
   
   dat = zeros(Nchans, sum(Nsamples));
   for trial=1:Ntrials
-    ft_info('.');
+    fprintf('.');
     begsample = sum(Nsamples(1:(trial-1))) + 1;
     endsample = sum(Nsamples(1:trial));
     dat(:,begsample:endsample) = data.trial{trial};
   end
-  ft_info('\n');
-  ft_info('concatenated data matrix size %dx%d\n', size(dat,1), size(dat,2));
+  fprintf('\n');
+  fprintf('concatenated data matrix size %dx%d\n', size(dat,1), size(dat,2));
   
-  hasdatanans = any(~isfinite(dat(:)));
-  if hasdatanans
-    ft_info('data contains nans, only using the non-nan samples\n');
-    finitevals = sum(~isfinite(dat))==0;
-    dat        = dat(:,finitevals);
-  end
 else
-  ft_info('not concatenating data\n');
+  fprintf('not concatenating data\n');
   dat = data.trial;
-  % FIXME cellmode processing is not nan-transparent yet
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % perform the component analysis
-ft_info('starting decomposition using %s\n', cfg.method);
+fprintf('starting decomposition using %s\n', cfg.method);
 switch cfg.method
   
   case 'icasso'
@@ -436,9 +426,9 @@ switch cfg.method
     end
     
     % do the rest of the icasso related processing
-    sR = icassoCluster(sR, 'strategy', 'AL', 'simfcn', 'abscorr', 's2d', 'sim2dis', 'L',cfg.numcomponent);
-    sR = icassoProjection(sR, 'cca', 's2d', 'sqrtsim2dis', 'epochs', 75);
-    [Iq, mixing, unmixing, dum, index2centrotypes] = icassoResult(sR,cfg.numcomponent);
+    sR = icassoCluster(sR,'strategy','AL','simfcn','abscorr','s2d','sim2dis','L',cfg.numcomponent);
+    sR = icassoProjection(sR,'cca','s2d','sqrtsim2dis','epochs',75);
+    [Iq, mixing, unmixing, ~, index2centrotypes]=icassoResult(sR,cfg.numcomponent);
     
     % this step is done, because in icassoResult mixing is determined to be
     % pinv(unmixing), which yields strange results. Better take it from the
@@ -483,7 +473,7 @@ switch cfg.method
       % the "catch me" syntax is broken on MATLAB74, this fixes it
       me = lasterror;
       % give a hopefully instructive error message
-      ft_info(['If you get an out-of-memory in fastica here, and you use fastica 2.5, change fastica.m, line 482: \n' ...
+      fprintf(['If you get an out-of-memory in fastica here, and you use fastica 2.5, change fastica.m, line 482: \n' ...
         'from\n' ...
         '  if ~isempty(W)                  %% ORIGINAL VERSION\n' ...
         'to\n' ...
@@ -646,7 +636,6 @@ switch cfg.method
     
     params         = struct(cfg.dss);
     params.denf.h  = str2func(cfg.dss.denf.function);
-    params.preprocf.h = str2func(cfg.dss.preprocf.function);
     if ~ischar(cfg.numcomponent)
       params.sdim = cfg.numcomponent;
     end
@@ -671,10 +660,12 @@ switch cfg.method
     % start the decomposition
     % state   = dss(state);  % this is for the DSS toolbox version 0.6 beta
     state   = denss(state);  % this is for the DSS toolbox version 1.0
+    % weights = state.W;
+    % sphere  = state.V;
     
     mixing   = state.A;
     unmixing = state.B;
-  
+    
     % remember the updated configuration details
     cfg.dss.denf      = state.denf;
     cfg.dss.orthof    = state.orthof;
@@ -683,8 +674,7 @@ switch cfg.method
     cfg.dss.W         = state.W;
     cfg.dss.V         = state.V;
     cfg.dss.dV        = state.dV;
-    if isfield(state, 'D'), cfg.dss.D = state.D(1:min([state.sdim size(state.dV)])); end
-    cfg.numcomponent  = min([state.sdim size(state.dV)]);
+    cfg.numcomponent  = state.sdim;
     
   case 'sobi'
     % check whether the required low-level toolboxes are installed
@@ -764,8 +754,7 @@ switch cfg.method
     [unmixing, mixing, rho, compdata, time] = bsscca(dat, optarg{:});
     data.trial = mixing*compdata;
     data.time  = time;
-    data       = removefields(data, 'sampleinfo');
- 
+    
     if size(mixing,1)>numel(data.label)
       for m = 1:(size(mixing,1)-numel(data.label))
         data.label{end+1} = sprintf('refchan%03d',m);
@@ -859,7 +848,7 @@ end
 % apply the linear projection also to the sensor description
 if ~isempty(sensfield)
   if  strcmp(cfg.updatesens, 'yes')
-    ft_info('also applying the unmixing matrix to the %s structure\n', sensfield);
+    fprintf('also applying the unmixing matrix to the %s structure\n', sensfield);
     % construct a montage and apply it to the sensor description
     montage          = [];
     montage.labelold = data.label;
@@ -874,7 +863,7 @@ if ~isempty(sensfield)
       comp.(sensfield) = rmfield(comp.(sensfield), 'type');
     end
   else
-    ft_info('not applying the unmixing matrix to the %s structure\n', sensfield);
+    fprintf('not applying the unmixing matrix to the %s structure\n', sensfield);
     % simply copy it over
     comp.(sensfield) = data.(sensfield);
   end

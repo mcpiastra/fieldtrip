@@ -1,9 +1,9 @@
 function test_bug1051
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_prepare_neighbours ft_megplanar ft_apply_montage
+% TEST ft_prepare_neighbours ft_megplanar ft_apply_montage
 
 % the bug consists of ft_apply_montage not adequately dealing with 
 % sensor descriptions that contain coilori/pos chanori/pos.

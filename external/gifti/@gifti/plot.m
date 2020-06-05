@@ -4,7 +4,7 @@ function varargout = plot(varargin)
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Guillaume Flandin
-% $Id: plot.m 5888 2014-02-19 19:54:12Z guillaume $
+% $Id$
 
 % if ishandle(varargin{1})
 %     h = figure(varargin{1});
@@ -20,14 +20,12 @@ function varargout = plot(varargin)
 
 
 cdata = [];
-ax = [];
 if nargin == 1
     this = varargin{1};
     h = gcf;
 else
     if ishandle(varargin{1})
-        ax = varargin{1};
-        h = figure(get(ax,'parent'));
+        h = figure(get(varargin{1},'parent'));
         this = varargin{2};
     else
         this = varargin{1};
@@ -41,25 +39,21 @@ else
     end
 end
 
-if isempty(ax), ax = axes('Parent',h); end
-axis(ax,'equal');
-axis(ax,'off');
 hp = patch(struct(...
     'vertices',  subsref(this,struct('type','.','subs','vertices')),...
     'faces',     subsref(this,struct('type','.','subs','faces'))),...
     'FaceColor', 'b',...
-    'EdgeColor', 'none',...
-    'Parent',ax);
+    'EdgeColor', 'none');
 
 if ~isempty(cdata)
     set(hp,'FaceVertexCData',cdata(:,indc), 'FaceColor','interp')
 end
 
-axes(ax);
+axis equal;
+axis off;
 camlight;
 camlight(-80,-10);
 lighting phong;
-axes(ax);
 cameramenu;
 
 if nargout

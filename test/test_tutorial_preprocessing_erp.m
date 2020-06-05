@@ -1,6 +1,6 @@
 function test_tutorial_preprocessing_erp
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
 % This is a test script for the EEG preprocessing example page that Irina made for the Cracow workshop.

@@ -1,9 +1,9 @@
 function test_bug1916
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_scalingfactor
+% TEST ft_scalingfactor
 
 if isempty(which('ft_scalingfactor'))
   % it is in the fieldtrip/private directory

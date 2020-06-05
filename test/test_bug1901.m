@@ -1,9 +1,13 @@
 function test_bug1901
 
-% MEM 3gb
+% MEM 2500mb
 % WALLTIME 00:15:00
 
-% DEPENDENCY ft_prepare_leadfield ft_prepare_sourcemodel prepare_headmodel ft_convert_units
+% TEST ft_prepare_leadfield ft_prepare_sourcemodel prepare_headmodel ft_convert_units
+
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
 
 % this is some data that should be relatively compatible with the original data
 load(dccnpath('/home/common/matlab/fieldtrip/data/test/bug1901.mat'), 'vol'); 
@@ -17,12 +21,17 @@ cfg.reducerank = 2;
 cfg.feedback = 'off';
 cfg.inwardshift = 0;
 cfg.grad = grad;
-cfg.headmodel = vol;
+cfg.vol = vol;
 cfg.channel = ft_channelselection('MEG', grad.label);
-cfg.sourcemodel.resolution = 5;
-cfg.sourcemodel.unit = 'cm';
+cfg.grid.resolution = 5;
+cfg.grid.unit = 'cm';
 
 grid = ft_prepare_leadfield(cfg);
+
+% display the structures
+grad;
+vol
+grid;
 
 % the grid is in cm, which corresponds to the units of the grad, not the vol
 % with a 5 cm grid, you can fit 12 sources in the head
@@ -40,11 +49,11 @@ cfg.reducerank = 2;
 cfg.feedback = 'off';
 cfg.inwardshift = 0;
 cfg.grad = grad_mm;
-cfg.headmodel = vol_mm;
+cfg.vol = vol_mm;
 cfg.channel = ft_channelselection('MEG', grad.label);
-cfg.sourcemodel.resolution = 5; % this is now in mm
+cfg.grid.resolution = 5; % this is now in mm
 grid_mm = ft_prepare_sourcemodel(cfg);
-cfg.sourcemodel.unit = 'cm'; 
+cfg.sourceunits = 'cm'; 
 grid_mm2 = ft_prepare_sourcemodel(cfg);
 
 assert(sum(grid_mm.inside)>1e4 && sum(grid_mm.inside)<1e5); % expecting 11822 inside grid points
@@ -59,11 +68,11 @@ cfg.reducerank = 2;
 cfg.feedback = 'off';
 cfg.inwardshift = 0;
 cfg.grad = grad_cm;
-cfg.headmodel = vol_cm;
+cfg.vol = vol_cm;
 cfg.channel = ft_channelselection('MEG', grad.label);
-cfg.sourcemodel.resolution = 5;  % this is now in mm
+cfg.grid.resolution = 5;  % this is now in mm
 grid_cm = ft_prepare_sourcemodel(cfg);
-cfg.sourcemodel.unit = 'mm'; 
+cfg.sourceunits = 'mm'; 
 grid_cm2 = ft_prepare_sourcemodel(cfg);
 
 assert(sum(grid_cm.inside)==12);                              % expecting 12 inside grid points
@@ -78,11 +87,11 @@ cfg.reducerank = 2;
 cfg.feedback = 'off';
 cfg.inwardshift = 0;
 cfg.grad = grad_m;
-cfg.headmodel = vol_m;
+cfg.vol = vol_m;
 cfg.channel = ft_channelselection('MEG', grad.label);
-cfg.sourcemodel.resolution = 5; % this is now in m
+cfg.grid.resolution = 5; % this is now in m
 grid_m = ft_prepare_sourcemodel(cfg);
-cfg.sourcemodel.unit = 'cm'; 
+cfg.sourceunits = 'cm'; 
 grid_m2 = ft_prepare_sourcemodel(cfg);
 
 assert(sum(grid_m.inside)==0);   % expecting zero inside grid points

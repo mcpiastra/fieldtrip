@@ -1,9 +1,9 @@
 function test_bug1665
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_volumesegment ft_volumenormalise align_ctf2acpc ft_hastoolbox
+% TEST ft_volumesegment ft_volumenormalise align_ctf2acpc ft_hastoolbox
 % ft_checkdata
 
 % this function tests whether align_ctf2acpc works robustly when the input

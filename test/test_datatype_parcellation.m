@@ -1,18 +1,18 @@
 function test_datatype_parcellation
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_datatype_parcellation ft_datatype
+% TEST ft_datatype_parcellation ft_datatype
 
-% See also http://bugzilla.fieldtriptoolbox.org/show_bug.cgi?id=1652 which
+% See also http://bugzilla.fcdonders.nl/show_bug.cgi?id=1652 which
 % includes an elaborate discussion to the 2012 version of the
 % segmentation and parcellation structures.
 
 clear all
 
 % construct the data structures that are given as examples in the function help
-[pnt, tri] = mesh_sphere(162);
+[pnt, tri] = icosahedron162;
 
 example1 = [];
 example1.pos = pnt;

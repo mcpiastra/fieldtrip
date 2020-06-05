@@ -1,8 +1,10 @@
 function inspect_bug645
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_read_event
+
+% TEST test_bug645
+% TEST ft_read_event
 
 filename = dccnpath('/home/common/matlab/fieldtrip/data/test/bug645/Events_ECI_TCPIP_55513.xml');
 

@@ -1,6 +1,6 @@
 function test_bug1114
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
 % This function parses all FieldTrip main and module functions and determines
@@ -42,7 +42,7 @@ for dirindex=1:length(dirlist)
   
   compat = false(size(outlist));
   for i=1:length(outlist)
-    compat(i) = ~isempty(regexp(outlist{i}, '/compat/obsolete', 'once'));
+    compat(i) = ~isempty(regexp(outlist{i}, '/compat', 'once'));
   end
   % switch to list indices
   compat = find(compat);

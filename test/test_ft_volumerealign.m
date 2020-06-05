@@ -1,9 +1,9 @@
 function test_ft_volumerealign
 
-% MEM 4gb
+% MEM 2500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_read_mri ft_volumerealign ft_volumereslice
+% TEST ft_read_mri ft_volumerealign ft_volumereslice
 
 % to test:
 % between modalities

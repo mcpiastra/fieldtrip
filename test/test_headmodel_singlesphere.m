@@ -1,9 +1,9 @@
 function test_headmodel_singlesphere
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_prepare_vol_sens ft_compute_leadfield ft_headmodel_singlesphere
+% TEST ft_prepare_vol_sens ft_compute_leadfield ft_headmodel_singlesphere
 
 % generate some random points and scale to a unit sphere
 pnt = randn(100,3);
@@ -16,7 +16,7 @@ geom.pnt = pnt * 100;
 vol = ft_headmodel_singlesphere(geom, 'conductivity', [0.42]);
 
 % generate a unit sphere
-[pnt, tri] = mesh_sphere(162);
+[pnt, tri] = icosahedron162;
 
 % create a set of electrodes
 sel = find(pnt(:,3)>0);

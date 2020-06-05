@@ -1,9 +1,9 @@
 function test_bug941
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_channelrepair ft_databrowser
+% TEST ft_channelrepair ft_databrowser
 
 load(dccnpath('/home/common/matlab/fieldtrip/data/test/bug941.mat'));
 

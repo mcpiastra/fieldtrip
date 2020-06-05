@@ -1,7 +1,7 @@
 function [cfg, artifact] = ft_artifact_jump(cfg, data)
 
-% FT_ARTIFACT_JUMP reads the data segments of interest from file and identifies SQUID
-% jump artifacts.
+% FT_ARTIFACT_JUMP reads the data segments of interest from file and identifies
+% SQUID jump artifacts.
 %
 % Use as
 %   [cfg, artifact] = ft_artifact_jump(cfg)
@@ -10,13 +10,9 @@ function [cfg, artifact] = ft_artifact_jump(cfg, data)
 % or
 %   cfg.headerfile  = string with the filename
 %   cfg.datafile    = string with the filename
-% and optionally
-%   cfg.headerformat
-%   cfg.dataformat
 %
 % Alternatively you can use it as
 %   [cfg, artifact] = ft_artifact_jump(cfg, data)
-% where the input data is a structure as obtained from FT_PREPROCESSING.
 %
 % In both cases the configuration should also contain
 %   cfg.trl        = structure that defines the data segments of interest. See FT_DEFINETRIAL
@@ -35,20 +31,22 @@ function [cfg, artifact] = ft_artifact_jump(cfg, data)
 %   cfg.artfctdef.jump.trlpadding    = automatically determined based on the filter padding (cfg.padding)
 %   cfg.artfctdef.jump.artpadding    = automatically determined based on the filter padding (cfg.padding)
 %
-% The output argument "artifact" is a Nx2 matrix comparable to the "trl" matrix of
-% FT_DEFINETRIAL. The first column of which specifying the beginsamples of an
-% artifact period, the second column contains the endsamples of the artifactperiods.
+% The output argument "artifact" is a Nx2 matrix comparable to the
+% "trl" matrix of FT_DEFINETRIAL. The first column of which specifying the
+% beginsamples of an artifact period, the second column contains the
+% endsamples of the artifactperiods.
 %
-% To facilitate data-handling and distributed computing, you can use
+% To facilitate data-handling and distributed computing you can use
 %   cfg.inputfile   =  ...
-% to read the input data from a *.mat file on disk. This mat files should contain
-% only a single variable named 'data', corresponding to the input structure.
+% If you specify this option the input data will be read from a *.mat
+% file on disk. This mat files should contain only a single variable named 'data',
+% corresponding to the input structure.
 %
 % See also FT_REJECTARTIFACT, FT_ARTIFACT_CLIP, FT_ARTIFACT_ECG, FT_ARTIFACT_EOG,
 % FT_ARTIFACT_JUMP, FT_ARTIFACT_MUSCLE, FT_ARTIFACT_THRESHOLD, FT_ARTIFACT_ZVALUE
 
-% Undocumented local options
-% cfg.artfctdef.jump.method
+% Undocumented local options:
+% cfg.method
 
 % Copyright (C) 2003-2011, Jan-Mathijs Schoffelen & Robert Oostenveld
 %
@@ -78,7 +76,6 @@ ft_nargout  = nargout;
 % do the general setup of the function
 ft_defaults
 ft_preamble init
-
 % ft_preamble provenance is not needed because just a call to ft_artifact_zvalue
 % ft_preamble loadvar data is not needed because ft_artifact_zvalue will do this
 
@@ -126,7 +123,7 @@ cfg.artfctdef.jump.trlpadding = ft_getopt(cfg.artfctdef.jump, 'trlpadding', 0.5*
 cfg.artfctdef.jump.fltpadding = ft_getopt(cfg.artfctdef.jump, 'fltpadding', 0.5*cfg.padding);
 cfg.artfctdef.jump.artpadding = ft_getopt(cfg.artfctdef.jump, 'artpadding', 0.5*cfg.padding);
 
-% construct a temporary configuration that can be passed onto FT_ARTIFACT_ZVALUE
+% construct a temporary configuration that can be passed onto artifact_zvalue
 tmpcfg                  = cfg;
 tmpcfg.artfctdef.zvalue = cfg.artfctdef.jump;
 tmpcfg.artfctdef        = rmfield(tmpcfg.artfctdef, 'jump');

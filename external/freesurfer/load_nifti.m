@@ -32,11 +32,11 @@ function hdr = load_nifti(niftifile,hdronly)
 %
 % Original Author: Doug Greve
 % CVS Revision Info:
-%    $Author: greve $
-%    $Date: 2016/01/19 21:18:27 $
-%    $Revision: 1.21 $
+%    $Author: nicks $
+%    $Date: 2011/03/02 00:04:12 $
+%    $Revision$
 %
-% Copyright © 2011 The General Hospital Corporation (Boston, MA) "MGH"
+% Copyright ?? 2011 The General Hospital Corporation (Boston, MA) "MGH"
 %
 % Terms and conditions for use, reproduction, distribution and contribution
 % are found in the 'FreeSurfer Software License Agreement' contained
@@ -49,7 +49,7 @@ function hdr = load_nifti(niftifile,hdronly)
 
 hdr = [];
 
-if(nargin < 1 || nargin > 2)
+if(nargin < 1 | nargin > 2)
   fprintf('hdr = load_nifti(niftifile,<hdronly>)\n');
   return;
 end
@@ -61,23 +61,16 @@ if(isempty(hdronly)) hdronly = 0; end
 ext = niftifile((strlen(niftifile)-2):strlen(niftifile));
 if(strcmpi(ext,'.gz'))
   % Need to create unique file name (harder than it looks)
-  %r0 = rand('state');  rand('state', sum(100*clock));
-  %gzipped =  round(rand(1)*10000000 + sum(int16(niftifile))) + round(cputime);
-  %rand('state',r0);
-  new_niftifile = sprintf('%s.load_nifti.m.nii', tempname(fsgettmppath));
-  %fprintf('Uncompressing %s to %s\n',niftifile,new_niftifile);
-  gzipped = 1;
-  if(strcmp(computer,'MAC') || strcmp(computer,'MACI') || ismac)
-    cmd = sprintf('gunzip -c %s > %s', niftifile, new_niftifile);
+  rand('state', sum(100*clock));
+  gzipped =  round(rand(1)*10000000 + ...
+		   sum(int16(niftifile))) + round(cputime);
+  ind = findstr(niftifile, '.');
+  new_niftifile = sprintf('/tmp/tmp%d.nii', gzipped);
+  fprintf('Uncompressing %s to %s\n',niftifile,new_niftifile);
+  if (ismac || strcmp(computer,'MAC') || strcmp(computer,'MACI') || strcmp(computer, 'MACI64'))
+    unix(sprintf('gunzip -c %s > %s', niftifile, new_niftifile));
   else
-    cmd = sprintf('zcat %s > %s', niftifile, new_niftifile);
-  end
-  [status, result] = unix(cmd);
-  if(status)
-    fprintf('cd %s\n',pwd);
-    fprintf('%s\n',cmd);
-    fprintf('ERROR: %s\n',result);
-    return;
+    unix(sprintf('zcat %s > %s', niftifile, new_niftifile)) ;
   end
   niftifile = new_niftifile ;
 else
@@ -86,16 +79,7 @@ end
 
 hdr = load_nifti_hdr(niftifile);
 if(isempty(hdr)) 
-  if(gzipped >=0) 
-    cmd = sprintf('rm -f %s', niftifile);
-    [status, result] = unix(cmd); 
-    if(status)
-      fprintf('cd %s\n',pwd);
-      fprintf('%s\n',cmd);
-      fprintf('ERROR: %s\n',result);
-      return;
-    end
-  end
+  if(gzipped >=0) unix(sprintf('rm %s', niftifile)); end
   return; 
 end
 
@@ -106,7 +90,7 @@ if(nspatial == 163842) IsIco7 = 1; end
 
 % If only header is desired, return now
 if(hdronly) 
-  if(gzipped >=0) unix(sprintf('rm -f %s', niftifile)); end
+  if(gzipped >=0) unix(sprintf('rm %s', niftifile)); end
   if(IsIco7)
     % Reshape
     hdr.dim(2) = 163842;
@@ -131,28 +115,23 @@ fseek(fp,round(hdr.vox_offset),'bof');
 switch(hdr.datatype)
  % Note: 'char' seems to work upto matlab 7.1, but 'uchar' needed
  % for 7.2 and higher. 
- case   2, [hdr.vol, nitemsread] = fread(fp,inf,'*uchar'); %preserve datatype
- case   4, [hdr.vol, nitemsread] = fread(fp,inf,'*short');
- case   8, [hdr.vol, nitemsread] = fread(fp,inf,'*int');
- case  16, [hdr.vol, nitemsread] = fread(fp,inf,'*float');
- case  64, [hdr.vol, nitemsread] = fread(fp,inf,'*double');
- case 512, [hdr.vol, nitemsread] = fread(fp,inf,'*ushort');
- case 768, [hdr.vol, nitemsread] = fread(fp,inf,'*uint');
- otherwise
-   fprintf('ERROR: data type %d not supported',hdr.datatype);
-   hdr = [];
-   fclose(fp);
-   if(gzipped >=0) 
-     fprintf('Deleting temporary uncompressed file %s\n',niftifile);
-     unix(sprintf('rm -f %s', niftifile)); 
-   end
-   return;
+ case   2, [hdr.vol nitemsread] = fread(fp,inf,'uchar');
+ case   4, [hdr.vol nitemsread] = fread(fp,inf,'short');
+ case   8, [hdr.vol nitemsread] = fread(fp,inf,'int');
+ case  16, [hdr.vol nitemsread] = fread(fp,inf,'float');
+ case  64, [hdr.vol nitemsread] = fread(fp,inf,'double');
+ case 512, [hdr.vol nitemsread] = fread(fp,inf,'ushort');
+ case 768, [hdr.vol nitemsread] = fread(fp,inf,'uint');
+ otherwise,
+  fprintf('ERROR: data type %d not supported',hdr.datatype);
+  hdr = [];
+  return;
 end
 
 fclose(fp);
 if(gzipped >=0) 
   %fprintf('Deleting temporary uncompressed file %s\n',niftifile);
-  unix(sprintf('rm -f %s', niftifile)); 
+  unix(sprintf('rm %s', niftifile)); 
 end
 
 % Check that that many voxels were read in
@@ -172,12 +151,11 @@ if(IsIco7)
 end
 
 hdr.vol = reshape(hdr.vol, dim');
-if hdr.scl_slope~=0 && ~(hdr.scl_inter==0 && hdr.scl_slope==1)
-  % Rescaling is not needed if the slope==1 and intersect==0, skipping
-  % this preserves the numeric class of the data
-  %fprintf('Rescaling NIFTI: slope = %g, intercept = %g\n',...
-  %	  hdr.scl_slope,hdr.scl_inter);
-  hdr.vol = double(hdr.vol) * hdr.scl_slope  + hdr.scl_inter;
+if(hdr.scl_slope ~= 0)
+  fprintf('Rescaling NIFTI: slope = %g, intercept = %g\n',...
+	  hdr.scl_slope,hdr.scl_inter);
+  %fprintf('    Good luck, this has never been tested ... \n');
+  hdr.vol = hdr.vol * hdr.scl_slope  + hdr.scl_inter;
 end
 
 return;

@@ -44,7 +44,9 @@ function ft_write_spike(filename, spike, varargin)
 dataformat          = ft_getopt(varargin, 'dataformat');
 fsample             = ft_getopt(varargin, 'fsample');
 chanindx            = ft_getopt(varargin, 'chanindx');
-TimeStampPerSample  = ft_getopt(varargin, 'TimeStampPerSample');  % FIXME rename the option TimeStampPerSample to ftimestamp, c.f. fsample
+
+% FIXME rename the option TimeStampPerSample to ftimestamp, c.f. fsample
+TimeStampPerSample  = keyval('TimeStampPerSample',  varargin);
 
 % optionally select channels
 if ~isempty(chanindx)

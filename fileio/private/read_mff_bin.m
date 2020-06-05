@@ -7,10 +7,15 @@ function [output] = read_mff_bin(filename, begblock, endblock, chanindx)
 % or
 %   [dat] = read_mff_bin(filename, begblock, endblock);
 
-fid = fopen_or_error(filename,'r');
+fid = fopen(filename,'r');
+
+if fid == -1
+  ft_error('wrong filename') % could not find signal(n)
+end
 
 needhdr = (nargin==1);
 needdat = (nargin==4);
+
 
 if needhdr
   hdr = read_mff_block(fid, [], [], 'skip');

@@ -22,7 +22,7 @@ function ft_volumewrite(cfg, volume)
 %   cfg.vmpversion    = 1 or 2 (default) version of the vmp-format to use
 %
 % The default filetype is 'nifti', which means that a single *.nii file
-% will be written using the freesurfer toolbox. The 'nifti_img' filetype uses SPM for
+% will be written using the SPM8 toolbox. The 'nifti_img' filetype uses SPM8 for
 % a dual file (*.img/*.hdr) nifti-format file.
 % The analyze, analyze_spm, nifti, nifti_img and mgz filetypes support a homogeneous
 % transformation matrix, the other filetypes do not support a homogeneous transformation
@@ -51,7 +51,7 @@ function ft_volumewrite(cfg, volume)
 % file on disk. This mat files should contain only a single variable named 'data',
 % corresponding to the input structure.
 %
-% See also FT_SOURCEANALYSIS, FT_SOURCESTATISTICS, FT_SOURCEINTERPOLATE, FT_WRITE_MRI
+% See also FT_SOURCEANALYSIS, FT_SOURCESTATISTICS, FT_SOURCEINTERPOLATE
 
 % Undocumented local options:
 % cfg.parameter
@@ -414,36 +414,36 @@ switch cfg.filetype
 
   case 'nifti'
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % write in nifti format, using functions from  the freesurfer toolbox
+    % write in nifti format, using functions from  the SPM8 toolbox
     % this format supports a homogenous transformation matrix
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     [pathstr, name, ext] = fileparts(cfg.filename);
     if isempty(ext)
       cfg.filename = [cfg.filename,'.nii'];
     end
-    ft_write_mri(cfg.filename, data, 'dataformat', 'nifti', 'transform', transform);
+    ft_write_mri(cfg.filename, data, 'dataformat', 'nifti', 'transform', transform, 'spmversion', 'SPM8');
 
   case 'nifti_img'
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % write in nifti dual file format, using functions from  the SPM toolbox
+    % write in nifti dual file format, using functions from  the SPM8 toolbox
     % this format supports a homogenous transformation matrix
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     [pathstr, name, ext] = fileparts(cfg.filename);
     if isempty(ext)
       cfg.filename = [cfg.filename,'.img'];
     end
-    ft_write_mri(cfg.filename, data, 'dataformat', 'nifti_img', 'transform', transform);
+    ft_write_mri(cfg.filename, data, 'dataformat', 'nifti', 'transform', transform, 'spmversion', 'SPM8');
 
   case 'analyze_spm'
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % write in analyze format, using functions from  the SPM toolbox
+    % write in analyze format, using functions from  the SPM8 toolbox
     % this format supports a homogenous transformation matrix
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     [pathstr, name, ext] = fileparts(cfg.filename);
     if isempty(ext)
       cfg.filename = [cfg.filename,'.img'];
     end
-    ft_write_mri(cfg.filename, data, 'dataformat', 'analyze', 'transform', transform);
+    ft_write_mri(cfg.filename, data, 'dataformat', 'analyze', 'transform', transform, 'spmversion', 'SPM2');
 
   case {'mgz' 'mgh'}
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

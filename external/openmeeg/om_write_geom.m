@@ -35,22 +35,24 @@ fprintf(gfid,'Interfaces %d Mesh      \n', numbnd);
 fprintf(gfid,'                        \n');
 
 for i=1:numbnd
-    fprintf(gfid,'%s                  \n', bndfile{i});
+    ind = mod(i,numbnd)+1;
+    fprintf(gfid,'%s                  \n', bndfile{ind});
 end
 
 fprintf(gfid,'                        \n');
 fprintf(gfid,'Domains %d              \n', numbnd+1);
 fprintf(gfid,'                        \n');
 
-fprintf(gfid,'Domain air %d           \n', 1);
 for i=1:numbnd
+    ind = mod(i-2,numbnd) + 1;
     if i < numbnd
-        fprintf(gfid,'Domain %s %d %d\n', names{i}, i+1, -i);
+        fprintf(gfid,'Domain %s %d -%d\n', names{i}, i, ind);
     else
-        fprintf(gfid,'Domain %s %d   \n', names{i}, -i);
+        fprintf(gfid,'Domain %s -%d   \n', names{i}, ind);
     end
 end
 
+fprintf(gfid,'Domain Air %d           \n', numbnd);
 fclose(gfid);
 
 end %  function

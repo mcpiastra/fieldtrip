@@ -1,4 +1,4 @@
-function [result] = ft_test_report(varargin)
+function result = ft_test_report(varargin)
 
 % FT_TEST_REPORT
 
@@ -27,7 +27,7 @@ command = varargin{1};
 assert(isequal(command, 'report'));
 varargin = varargin(2:end);
 
-optbeg = find(ismember(varargin, {'matlabversion', 'fieldtripversion', 'user', 'hostname', 'branch', 'arch', 'showdate', 'showid', 'timeout'}));
+optbeg = find(ismember(varargin, {'matlabversion', 'fieldtripversion', 'user', 'hostname', 'branch', 'arch', 'showdate', 'showid'}));
 if ~isempty(optbeg)
   optarg   = varargin(optbeg:end);
   varargin = varargin(1:optbeg-1);
@@ -37,9 +37,8 @@ end
 
 % varargin contains the file (or files) to test
 % optarg contains the command-specific options
-showdate = ft_getopt(optarg, 'showdate', false);  if ischar(showdate), showdate = istrue(showdate);    end
-showid   = ft_getopt(optarg, 'showid', false);    if ischar(showid),   showid   = istrue(showid);      end
-timeout  = ft_getopt(optarg, 'timeout', 30);      if ischar(timeout),  timeout  = str2double(timeout); end
+showdate = ft_getopt(optarg, 'showdate', false);
+showid   = ft_getopt(optarg, 'showid', false);
 
 % construct the query string that will be passed in the URL
 query = '?';
@@ -51,7 +50,7 @@ for i=1:numel(queryparam)
   end
 end
 
-options = weboptions('ContentType', 'json', 'Timeout', timeout); % this returns the result as MATLAB structure
+options = weboptions('ContentType','json','Timeout',10); % this returns the result as MATLAB structure
 url = 'http://dashboard.fieldtriptoolbox.org/api/';
 
 if isempty(varargin)
@@ -74,11 +73,14 @@ result = renamefields(result, 'x_id', 'id');
 result = renamefields(result, 'createDate', 'date');
 
 % remove some of the fields
-if ~showid
+if ~istrue(showid)
   result = removefields(result, 'id');
 end
-if ~showdate
+if ~istrue(showdate)
   result = removefields(result, 'date');
 end
 
+% convert the struct-array to a table
+table = struct2table(result);
+fprintf('%s\n', table{:});
 

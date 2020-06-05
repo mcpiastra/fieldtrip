@@ -1,9 +1,9 @@
 function test_nanstat
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY nansum nanmean nanstd nanvar nanvar_base
+% TEST test_nanstat nansum nanmean nanstd nanvar nanvar_base
 
 % Test the conformance of FieldTrip's nansum, nanmean, nanvar and nanstd
 % functions with MATLABs versions in the statistics toolbox.

@@ -1,7 +1,7 @@
 function test_bug3267
 
 % WALLTIME 00:10:00
-% MEM 4gb
+% MEM 3gb
 
 % this script tests that the trialinfo is properly dealt with in the ft_appendxxx functions
 
@@ -71,9 +71,9 @@ timelockAppend = ft_appendtimelock(cfg, timelockFIC, timelockFC);
 
 %% compare the two versions
 
-
-assert(~isfield(timelockAppend, 'sampleinfo')); % this should not have it
-assert( isfield(timelockAll,    'sampleinfo')); % and this one should
+% these should not have sampleinfo as per specification in FT_DATATYPE_TIMELOCK
+assert(~isfield(timelockAppend, 'sampleinfo'));
+assert(~isfield(timelockAll,    'sampleinfo'));
 
 % the order should be different
 assert(~isequal(timelockAll.trialinfo,  timelockAppend.trialinfo));
@@ -144,28 +144,18 @@ assert(all(abs(diff(redef1.trialinfo))<2)); % PASSES
 data2a = data1a;
 data2a.sampleinfo = [1 3; 4 6; 8 10; 11 13; 16 18];
 data2b = data1b;
-data2b.sampleinfo = [1 3; 4 6; 8 10; 11 13; 16 18];
-data2c = data1b;
-data2c.sampleinfo = [1 3; 4 6; 8 10; 11 13; 16 18];
-for i=1:numel(data2b.trial)
-  % replace the data, this should cause an error detected in ft_fetch_data
-  data2c.trial{i} = randn(size(data2c.trial{i}));
-end
+data2b.sampleinfo = data2a.sampleinfo;
 
 % append
-data2ab = ft_appenddata([], data2a, data2b);
-data2ac = ft_appenddata([], data2a, data2c);
-
-cfg = [];
-cfg.length = 1;
-cfg.overlap = 0;
-% this works as there is no conflict in data and sampleinfos
-redef2 = ft_redefinetrial(cfg, data2ab);
+data2 = ft_appenddata([], data2a, data2b);
 
 try
-  % this fails because of conflicting data and sampleinfos (at line 263)
   detectederror = true;
-  redef2 = ft_redefinetrial(cfg, data2ac);
+  % the next tacitly fails because of intertwined sampleinfos (at line 263)
+  cfg = [];
+  cfg.length = 1;
+  cfg.overlap = 0;
+  redef2 = ft_redefinetrial(cfg, data2);
   detectederror = false;
 end
 assert(detectederror, 'the expected error was not detected');
@@ -180,16 +170,15 @@ data3b = data1b;
 data3b.sampleinfo = [2 4; 5 7; 9 11; 12 14; 15 17];
 
 % append
-data3ab = ft_appenddata([], data3a, data3b);
+data3 = ft_appenddata([], data3a, data3b);
 
-cfg = [];
-cfg.length = 1;
-cfg.overlap = 0;
 try
   detectederror = true;
-  % this fails because of intertwined sampleinfos (at line 263)
-  redef3 = ft_redefinetrial(cfg, data3ab);
-  detectederror = false;
+  % tacitly fails because of intertwined sampleinfos (at line 263)
+  cfg = [];
+  cfg.length = 1;
+  cfg.overlap = 0;
+  redef3 = ft_redefinetrial(cfg, data3);
 end
 assert(detectederror, 'the expected error was not detected');
 

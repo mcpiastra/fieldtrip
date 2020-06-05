@@ -1,9 +1,9 @@
 function test_bug2606
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_timelockanalysis
+% TEST ft_timelockanalysis
 
 %% generate some data
 

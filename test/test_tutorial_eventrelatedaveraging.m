@@ -1,9 +1,9 @@
 function test_tutorial_eventrelatedaveraging(dataset)
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_preprocessing ft_timelockanalysis ft_multiplotER ft_singleplotER ft_topoplotER ft_megplanar ft_combineplanar
+% TEST ft_preprocessing ft_timelockanalysis ft_multiplotER ft_singleplotER ft_topoplotER ft_megplanar ft_combineplanar
 
 % see http://www.fieldtriptoolbox.org/tutorial/eventrelatedaveraging
 % this testscript corresponds to the version on the wiki at 23 December 2012
@@ -134,7 +134,6 @@ ft_topoplotER(cfg,avgFIC);
 cfg                 = [];
 cfg.feedback        = 'yes';
 cfg.method          = 'template';
-cfg.senstype        = 'meg';    
 cfg.neighbours      = ft_prepare_neighbours(cfg, avgFIC);
 
 cfg.planarmethod    = 'sincos';

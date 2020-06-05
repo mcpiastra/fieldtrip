@@ -27,8 +27,6 @@ function ft_progress(varargin)
 %      pause(0.1);
 %    end
 %    ft_progress('close')
-%
-% See also WAITBAR
 
 % Copyright (C) 2004-2008, Robert Oostenveld
 %

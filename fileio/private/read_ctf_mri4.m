@@ -26,7 +26,11 @@ function [mri, hdr, cpersist] = read_ctf_mri4(filename)
 %
 % $Id$
 
-fid = fopen_or_error(filename,'rb', 'ieee-be');
+fid = fopen(filename,'rb', 'ieee-be');
+
+if fid<=0
+  ft_error(sprintf('could not open MRI file: %s\n', filename));
+end
 
 [cpersist] = read_cpersist(fid);
 
@@ -95,7 +99,7 @@ hdr.headOrigin_axial = hmOrigin(3);
 %fread(fid,204,'char'); % unused, padding to 1028 bytes
 
 % revert to previous warning state
-ft_warning(ws);
+warning(ws);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % READ THE IMAGE DATA

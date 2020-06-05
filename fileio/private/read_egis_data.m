@@ -39,11 +39,14 @@ function dat = read_egis_data(filename, hdr, begtrial, endtrial, chanindx)
 %
 % $Id$
 
-fh=fopen_or_error([filename],'r');
+fh=fopen([filename],'r');
+if fh==-1
+    ft_error('wrong filename')
+end
 fclose(fh);
 
 [fhdr,chdr,ename,cnames,fcom,ftext] = read_egis_header(filename);
-fh=fopen_or_error([filename],'r');
+fh=fopen([filename],'r');
 fhdr(1)=fread(fh,1,'int32'); %BytOrd
 [str,maxsize,cEndian]=computer;
 if fhdr(1)==16909060

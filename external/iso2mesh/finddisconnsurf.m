@@ -19,19 +19,19 @@ function facecell=finddisconnsurf(f)
 
 facecell={};
 subset=[];
-while(~isempty(f))
+while(length(f))
 	idx=reshape(ismember(f,f(1,:)), size(f));
-	ii=find(sum(idx,2));
-	while(~isempty(ii))
+	[ii,jj]=find(sum(idx')');
+	while(length(ii)>0)
 		if(isempty(ii)) break; end
 		%ii=unique(ii);
 		subset(end+1:end+length(ii),:)=f(ii,:);
 		f(ii,:)=[];
 		idx=reshape(ismember(f,subset), size(f));
-	    ii=find(sum(idx,2));
+	        [ii,jj]=find(sum(idx')');
 	end
-	if(~isempty(subset))
+	if(length(subset))
 		facecell{end+1}=subset;
-        subset=[];
+        	subset=[];
 	end
 end

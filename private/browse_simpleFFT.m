@@ -36,7 +36,7 @@ button_chansel = uicontrol('tag', 'chansel', 'parent', ffth, 'units', 'normalize
 % put dat in fig (sparse)
 fftopt = [];
 fftopt.freqdata = freqdata;
-fftopt.linecolor = cfg.linecolor;
+fftopt.chancolors = cfg.chancolors;
 fftopt.chansel = 1:numel(data.label);
 fftopt.semilogx = true;
 fftopt.semilogy = true;
@@ -100,14 +100,15 @@ else
   dat = fftopt.freqdata.powspctrm;
 end
 
+
 % select data and chanel colors
-linecolor = fftopt.linecolor(fftopt.chansel, :);
+chancolors = fftopt.chancolors(fftopt.chansel, :);
 dat = dat(fftopt.chansel, :);
 
 % plot using specified colors
 set(0, 'currentFigure', ffth)
 for ichan = 1:size(dat, 1)
-  color = linecolor(ichan, :);
+  color = chancolors(ichan, :);
   ft_plot_vector(freq, dat(ichan, :), 'box', false, 'color', color)
 end
 

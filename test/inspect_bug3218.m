@@ -1,8 +1,11 @@
 function test_bug3218
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_rejectartifact ft_rejectvisual
+
+% TEST test_bug3218
+% TEST ft_rejectartifact
+% TEST ft_rejectvisual
 
 load(dccnpath('/home/common/matlab/fieldtrip/data/test/bug3218.mat'), 'data');
 

@@ -1,9 +1,9 @@
 function test_bug843
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_topoplotTFR
+% TEST ft_topoplotTFR
 
 % it has been reported that the linearly indexed connectivity metrics don't
 % behave robustly in combination with a specified refchannel; also

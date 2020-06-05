@@ -108,16 +108,6 @@ end
 switch version
   case '2014'
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if isfield(volume, 'coordsys')
-      % ensure that it is in lower case
-      volume.coordsys = lower(volume.coordsys);
-    end
-    
-    if isfield(volume, 'unit')
-      % ensure that it is in lower case
-      volume.unit = lower(volume.unit);
-    end
-    
     if isfield(volume, 'dimord')
       volume = rmfield(volume, 'dimord');
     end
@@ -143,7 +133,7 @@ switch version
       try
         volume.(fn{i}) = reshape(volume.(fn{i}), volume.dim);
       catch
-        ft_notice('could not reshape "%s" to the dimensions of the volume', fn{i});
+        ft_warning('could not reshape "%s" to the expected dimensions', fn{i});
       end
     end
 

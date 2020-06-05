@@ -1,9 +1,12 @@
 function test_bug472
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:13:01
 
-% DEPENDENCY buffer.mexa64 buffer.mexmaci buffer.mexw64 buffer.mexglx buffer.mexmaci64 buffer.mexmac buffer.mexw32
+% TEST buffer.mexa64 buffer.mexmaci buffer.mexw64 buffer.mexglx buffer.mexmaci64 buffer.mexmac buffer.mexw32
+
+global ft_default;
+ft_default.feedback = 'no';
 
 % start without a buffer
 ft_destroy_buffer

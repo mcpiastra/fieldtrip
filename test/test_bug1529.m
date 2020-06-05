@@ -1,9 +1,9 @@
 function test_bug1529
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_plot_ortho
+% TEST ft_plot_ortho
 
 [ftver, ftpath] = ft_version;
 

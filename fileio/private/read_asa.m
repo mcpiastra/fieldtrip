@@ -42,7 +42,10 @@ function [val] = read_asa(filename, elem, format, number, token)
 %
 % $Id$
 
-fid = fopen_or_error(filename, 'rt');
+fid = fopen(filename, 'rt');
+if fid==-1
+  ft_error(sprintf('could not open file %s', filename));
+end
 
 if nargin<4
   if strcmp(format, '%s')

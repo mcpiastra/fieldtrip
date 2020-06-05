@@ -119,18 +119,18 @@ end
 
 if hasdata && strcmp(cfg.demean, 'yes')
   % optionally perform baseline correction on each trial
-  ft_info('baseline correcting data \n');
+  fprintf('baseline correcting data \n');
   for trial=1:numel(data.trial)
     data.trial{trial} = ft_preproc_baselinecorrect(data.trial{trial});
   end
 end
 
 % set the rejected component amplitudes to zero
-ft_info('removing %d components\n', length(reject));
+fprintf('removing %d components\n', length(reject));
 if ~hasdata
-  ft_info('keeping %d components\n',  ncomps-length(reject));
+  fprintf('keeping %d components\n',  ncomps-length(reject));
 else
-  ft_info('keeping %d components\n',  nchans-length(reject));
+  fprintf('keeping %d components\n',  nchans-length(reject));
 end
 
 % create a projection matrix by subtracting the subspace spanned by the
@@ -175,7 +175,7 @@ else
 end % if hasdata
 
 % apply the linear projection to the data
-data = ft_apply_montage(data, montage, 'keepunused', keepunused, 'feedback', cfg.feedback, 'showcallinfo', cfg.showcallinfo);
+data = ft_apply_montage(data, montage, 'keepunused', keepunused, 'feedback', cfg.feedback);
 
 if isfield(data, 'grad')
   sensfield = 'grad';
@@ -190,7 +190,7 @@ end
 % apply the linear projection also to the sensor description
 if ~isempty(sensfield)
   if  strcmp(cfg.updatesens, 'yes')
-    ft_info('also applying the backprojection matrix to the %s structure\n', sensfield);
+    fprintf('also applying the backprojection matrix to the %s structure\n', sensfield);
 
     % the balance field is needed to keep the sequence of linear projections
     if ~isfield(data.(sensfield), 'balance')
@@ -231,7 +231,7 @@ if ~isempty(sensfield)
     data.(sensfield)  = sens;
     
   else
-    ft_info('not applying the backprojection matrix to the %s structure\n', sensfield);
+    fprintf('not applying the backprojection matrix to the %s structure\n', sensfield);
     % simply copy it over
     comp.(sensfield) = data.(sensfield);
   end

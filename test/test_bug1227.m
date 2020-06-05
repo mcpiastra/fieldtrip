@@ -1,11 +1,11 @@
 function test_bug1227
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_sourcewrite
+% TEST test_bug1227 ft_sourcewrite
 
-[pnt, tri] = mesh_sphere(162);
+[pnt, tri] = icosahedron162;
 
 source = [];
 source.pos = pnt;

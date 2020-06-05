@@ -7,7 +7,7 @@ function [stat] = ft_sourcestatistics(cfg, varargin)
 %   [stat] = ft_sourcestatistics(cfg, source1, source2, ...)
 % where the input data is the result from FT_SOURCEANALYSIS, FT_SOURCEDESCRIPTIVES
 % or FT_SOURCEGRANDAVERAGE.  The source structures should be spatially alligned
-% to each other and should have the same positions for the sourcemodel.
+% to each other and should have the same positions for the source grid.
 %
 % The configuration should contain the following option for data selection
 %   cfg.parameter  = string, describing the functional data to be processed, e.g. 'pow', 'nai' or 'coh'
@@ -23,8 +23,13 @@ function [stat] = ft_sourcestatistics(cfg, varargin)
 % for the corresponding configuration options and for a detailed
 % explanation of each method.
 %
-% See also FT_SOURCEANALYSIS, FT_SOURCEDESCRIPTIVES, FT_SOURCEGRANDAVERAGE, FT_MATH,
-% FT_STATISTICS_MONTECARLO, FT_STATISTICS_ANALYTIC, FT_STATISTICS_CROSSVALIDATE, FT_STATISTICS_STATS
+% See also FT_SOURCEANALYSIS, FT_SOURCEDESCRIPTIVES, FT_SOURCEGRANDAVERAGE
+
+% Deprecated cfg.method options:
+%                    'parametric'    uses the MATLAB statistics toolbox (very similar to 'stats'),
+%                    'randomization' uses randomization of the data prior to source reconstruction,
+%                    'randcluster'   uses randomization of the data prior to source reconstruction
+%                                    in combination with spatial clusters.
 
 % FIXME the following needs to be reimplemented
 %
@@ -33,9 +38,12 @@ function [stat] = ft_sourcestatistics(cfg, varargin)
 %   cfg.atlas        = filename of the atlas
 %   cfg.roi          = string or cell of strings, region(s) of interest from anatomical atlas
 %   cfg.avgoverroi   = 'yes' or 'no' (default = 'no')
-%   cfg.hemisphere   = 'left', 'right', 'both', 'combined', specifying this is required when averaging over regions
+%   cfg.hemisphere   = 'left', 'right', 'both', 'combined', specifying this is
+%                      required when averaging over regions
+%   cfg.inputcoord   = 'mni' or 'tal', the coordinate system in which your source
+%                      reconstruction is expressed
 
-% Copyright (C) 2005-2020, Robert Oostenveld
+% Copyright (C) 2005-2014, Robert Oostenveld
 %
 % This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
@@ -67,19 +75,25 @@ ft_preamble debug
 ft_preamble loadvar varargin
 ft_preamble provenance varargin
 ft_preamble trackconfig
-ft_preamble randomseed
 
 % the ft_abort variable is set to true or false in ft_preamble_init
 if ft_abort
   return
 end
 
+
+% check if the input cfg is valid for this function
+cfg = ft_checkconfig(cfg, 'required',    {'method', 'design'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'approach',   'method'});
+
+
+%%%%%%%%%
+
 % check if the input cfg is valid for this function
 cfg = ft_checkconfig(cfg, 'required',    {'method', 'design'});
 cfg = ft_checkconfig(cfg, 'renamed',     {'approach',   'method'});
 cfg = ft_checkconfig(cfg, 'forbidden',   {'transform'});
 cfg = ft_checkconfig(cfg, 'forbidden',   {'trials'}); % this used to be present until 24 Dec 2014, but was deemed too confusing by Robert
-cfg = ft_checkconfig(cfg, 'forbidden',   {'channel'}); 
 
 % check if the input data is valid for this function
 for i=1:length(varargin)
@@ -104,14 +118,15 @@ for i=1:length(varargin)
 end
 
 % ensure that the data in all inputs has the same channels, time-axis, etc.
-tmpcfg = keepfields(cfg, {'frequency', 'avgoverfreq', 'latency', 'avgovertime', 'avgoverpos', 'parameter', 'showcallinfo', 'select', 'nanmean'});
+tmpcfg = keepfields(cfg, {'frequency', 'avgoverfreq', 'latency', 'avgovertime', 'showcallinfo'});
 [varargin{:}] = ft_selectdata(tmpcfg, varargin{:});
 % restore the provenance information
 [cfg, varargin{:}] = rollback_provenance(cfg, varargin{:});
 
 dimord = getdimord(varargin{1}, cfg.parameter);
 dimtok = tokenize(dimord, '_');
-dimsiz = getdimsiz(varargin{1}, cfg.parameter, numel(dimtok));
+dimsiz = getdimsiz(varargin{1}, cfg.parameter);
+dimsiz(end+1:length(dimtok)) = 1; % there can be additional trailing singleton dimensions
 rptdim = find( strcmp(dimtok, 'subj') |  strcmp(dimtok, 'rpt') |  strcmp(dimtok, 'rpttap'));
 datdim = find(~strcmp(dimtok, 'subj') & ~strcmp(dimtok, 'rpt') & ~strcmp(dimtok, 'rpttap'));
 datsiz = dimsiz(datdim);
@@ -132,7 +147,7 @@ if isfield(varargin{1}, 'dim')
   end
 end
 
-if isfield(varargin{1}, 'inside')
+if isfield(varargin{1}, 'inside'), 
   cfg.inside = varargin{1}.inside;
 else
   cfg.inside = true(size(varargin{1}.pos,1),1);
@@ -142,6 +157,7 @@ end
 % when there are multiple values per grid position
 cfg.originside = cfg.inside;
 cfg.inside     = repmat(cfg.inside, prod(cfg.dim)./numel(cfg.inside), 1);
+
 
 if numel(cfg.dim)==1
   cfg.dim(2) = 1;  % add a trailing singleton dimensions
@@ -176,13 +192,13 @@ end
 
 design = cfg.design;
 
-% fetch function handle to the intermediate-level statistics function
-statmethod = ft_getuserfun(cfg.method, 'statistics');
-if isempty(statmethod)
-  ft_error('could not find the corresponding function for cfg.method="%s"\n', cfg.method);
+% determine the function handle to the intermediate-level statistics function
+if exist(['ft_statistics_' cfg.method], 'file')
+  statmethod = str2func(['ft_statistics_' cfg.method]);
 else
-  fprintf('using "%s" for the statistical testing\n', func2str(statmethod));
+  ft_error('could not find the corresponding function for cfg.method="%s"\n', cfg.method);
 end
+fprintf('using "%s" for the statistical testing\n', func2str(statmethod));
 
 % check that the design completely describes the data
 if size(dat,2) ~= size(cfg.design,2)
@@ -219,7 +235,7 @@ for i=1:length(fn)
     tmp = nan+zeros(numel(cfg.inside),1);
     tmp(cfg.inside) = stat.(fn{i});
     stat.(fn{i})    = tmp;
-  end
+  end  
   if numel(stat.(fn{i}))==prod(datsiz)
     % reformat into the same dimensions as the input data
     stat.(fn{i}) = reshape(stat.(fn{i}), [datsiz 1]);
@@ -233,11 +249,10 @@ stat.dimord = cfg.dimord;
 stat = copyfields(varargin{1}, stat, {'freq', 'time', 'pos', 'dim', 'transform', 'tri', 'inside'});
 
 % these were only present to inform the low-level functions
-cfg = removefields(cfg, {'dimord', 'tri', 'dim', 'origdim', 'inside', 'originside'});
+cfg = removefields(cfg, {'dim', 'dimord', 'tri', 'inside'});
 
 % do the general cleanup and bookkeeping at the end of the function
 ft_postamble debug
-ft_postamble randomseed
 ft_postamble trackconfig
 ft_postamble previous   varargin
 ft_postamble provenance stat

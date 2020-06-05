@@ -7,10 +7,10 @@ function names = fieldnames(this)
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Guillaume Flandin
-% $Id: fieldnames.m 6507 2015-07-24 16:48:02Z guillaume $
+% $Id$
 
 if numel(this) > 1, warning('Only handle scalar objects yet.'); end
 
-pfn = {'vertices','faces','normals','cdata','mat','labels','indices'};
+pfn = {'vertices' 'faces' 'normals' 'cdata' 'mat' 'labels'};
 
-names = unique(pfn(isintent(this,pfn)));
+names = pfn(isintent(this,pfn));

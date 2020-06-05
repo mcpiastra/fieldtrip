@@ -5,7 +5,7 @@ function [stimulus, response, segment, timezero] = read_brainvision_vmrk(filenam
 %
 % Use as
 %   [stim, resp, segment, timezero] = read_brainvision_vmrk(filename)
-%
+% 
 % This function needs to read the header from a separate file and
 % assumes that it is located at the same location.
 %
@@ -40,43 +40,47 @@ timezero=[];
 % read the header belonging to this marker file
 hdr=read_brainvision_vhdr([filename(1:(end-4)) 'vhdr']);
 
-fid=fopen_or_error(filename,'rt');
+fid=fopen(filename,'rt');
+if fid==-1,
+    ft_error('cannot open marker file')
+end
 
 line=1;
 while line~=-1,
   line=fgetl(fid);
   % pause
   if ~isempty(line),
-    if contains(line,'Mk')
-      if contains(line,'Stimulus')
+    if ~isempty(findstr(line,'Mk')),
+      if ~isempty(findstr(line,'Stimulus'))
         [token,rem] = strtok(line,',');
         type=sscanf(rem,',S %i');
         [token,rem] = strtok(rem,',');
-        time=(sscanf(rem,', %i')-1)/hdr.Fs*1000;
+        time=(sscanf(rem,', %i')-1)/hdr.Fs*1000; 
         stimulus=[stimulus; type time(1)];
 
-      elseif contains(line,'Response')
+      elseif ~isempty(findstr(line,'Response'))
         [token,rem] = strtok(line,',');
         type=sscanf(rem,',R %i');
         [token,rem] = strtok(rem,',');
-        time=(sscanf(rem,', %i')-1)/hdr.Fs*1000;
+        time=(sscanf(rem,', %i')-1)/hdr.Fs*1000;                
         response=[response; type, time(1)];
 
-      elseif contains(line,'New Segment')
+      elseif ~isempty(findstr(line,'New Segment'))
         [token,rem] = strtok(line,',');
-        time=(sscanf(rem,',,%i')-1)/hdr.Fs*1000;
+        time=(sscanf(rem,',,%i')-1)/hdr.Fs*1000;                
         segment=[segment; time(1)];
 
-      elseif contains(line,'Time 0')
+      elseif ~isempty(findstr(line,'Time 0'))
         [token,rem] = strtok(line,',');
-        time=(sscanf(rem,',,%i')-1)/hdr.Fs*1000;
+        time=(sscanf(rem,',,%i')-1)/hdr.Fs*1000;                
         timezero=[timezero; time(1)];
 
       end
     end
-  else
+  else 
     line=1;
   end
 end
 
-fclose(fid);
+fclose(fid);    
+

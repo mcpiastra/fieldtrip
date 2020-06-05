@@ -45,7 +45,6 @@ ft_nargout  = nargout;
 ft_defaults
 ft_preamble init
 ft_preamble debug
-ft_preamble loadvar data
 ft_preamble provenance data
 ft_preamble trackconfig
 
@@ -64,7 +63,6 @@ cfg = ft_checkconfig(cfg, 'deprecated',  {'xparam'});
 % set the defaults
 cfg.xlim      = ft_getopt(cfg, 'xlim', 'all');
 cfg.parameter = ft_getopt(cfg, 'parameter', 'avg.icohspctrm');
-cfg.renderer  = ft_getopt(cfg, 'renderer'); % let MATLAB decide on the default
 
 if strcmp(cfg.parameter, 'avg.icohspctrm') && ~issubfield(data, 'avg.icohspctrm')
   data.avg.icohspctrm = abs(imag(data.avg.cohspctrm));
@@ -99,16 +97,17 @@ if isfield(cfg, 'xparam')
 end
 
 % read or create the layout that will be used for plotting
-tmpcfg = keepfields(cfg, {'layout', 'rows', 'columns', 'commentpos', 'scalepos', 'projection', 'viewpoint', 'rotate', 'width', 'height', 'elec', 'grad', 'opto', 'showcallinfo'});
-layout = ft_prepare_layout(tmpcfg);
-ft_plot_layout(layout, 'box', false, 'label', 'no', 'point', 'no');
+lay = ft_prepare_layout(cfg);%, varargin{1});
+cfg.layout = lay;
+ft_plot_lay(lay, 'box', false,'label','no','point','no');
 
-X = layout.pos(:,1);
-Y = layout.pos(:,2);
-Width = layout.width;
-Height = layout.height;
-Lbl = layout.label;
-chNum = numel(layout.label);
+%[chNum,X,Y,Width,Height,Lbl] = textread(cfg.layout,'%f %f %f %f %f %s');
+X = lay.pos(:,1);
+Y = lay.pos(:,2);
+Width = lay.width;
+Height = lay.height;
+Lbl = lay.label;
+chNum = numel(lay.label);
 
 xScaleFac = 1/(max(Width)+ max(X) - min(X));
 yScaleFac = 1/(max(Height)+ max(Y) - min(Y));
@@ -118,70 +117,37 @@ Ypos = 0.9*yScaleFac*(Y-min(Y));
 
 for k=1:length(chNum) - 2
   subplotOL('position',[Xpos(k) Ypos(k)+(Height(k)*yScaleFac) Width(k)*xScaleFac*2 Height(k)*yScaleFac*2])
-  tmpcfg = [];
-  tmpcfg.layout = layout;
+  config.layout = cfg.layout;
   if exist('tmpdata', 'var')
-    tmpcfg.style      = 'straight';
-    tmpcfg.marker     = 'off';
+    config.style      = 'straight';
+    config.marker     = 'off';
     try
-      tmpcfg.refmarker = strmatch(Lbl(k), data.reflabel);
+        config.refmarker = strmatch(Lbl(k), data.reflabel);
     catch
-      tmpcfg.refmarker = strmatch(Lbl(k), data.label);
+        config.refmarker = strmatch(Lbl(k), data.label);
     end
-    tmpcfg.interplimits = 'electrodes';
+    config.interplimits = 'electrodes';
     if isfield(cfg, 'xparam')
-      tmpcfg.xparam = cfg.xparam;
-      tmpcfg.xlim   = xparam;
+      config.xparam = cfg.xparam;
+      config.xlim   = xparam;
     else
-      tmpcfg.xparam = 'freq';
-      tmpcfg.xlim   = [k-0.5 k+0.5];
+      config.xparam = 'freq';
+      config.xlim   = [k-0.5 k+0.5];
     end
-    tmpcfg.parameter  = cfg.parameter;
-    tmpcfg.refchannel = Lbl(k);
-    tmpcfg.colorbar   = 'no';
-    tmpcfg.zlim       = scale;
-    tmpcfg.grid_scale = 30;
-    ft_topoplotTFR(tmpcfg, data);
+    config.parameter  = cfg.parameter;
+    config.refchannel = Lbl(k);
+    config.colorbar   = 'no';
+    config.zlim       = scale;
+    config.grid_scale = 30;
+    ft_topoplotTFR(config, data);
     drawnow
   end
-end
-
-% this is needed for the figure title
-if isfield(cfg, 'dataname') && ~isempty(cfg.dataname)
-  dataname = cfg.dataname;
-elseif isfield(cfg, 'inputfile') && ~isempty(cfg.inputfile)
-  dataname = cfg.inputfile;
-elseif nargin>1
-  dataname = arrayfun(@inputname, 2:nargin, 'UniformOutput', false);
-else
-  dataname = {};
-end
-
-% set the figure window title
-if ~isempty(dataname)
-  set(gcf, 'Name', sprintf('%d: %s: %s', double(gcf), mfilename, join_str(', ', dataname)));
-else
-  set(gcf, 'Name', sprintf('%d: %s', double(gcf), mfilename));
-end
-set(gcf, 'NumberTitle', 'off');
-
-% set renderer if specified
-if ~isempty(cfg.renderer)
-  set(gcf, 'renderer', cfg.renderer)
 end
 
 % do the general cleanup and bookkeeping at the end of the function
 ft_postamble debug
 ft_postamble trackconfig
-ft_postamble previous data
+ft_postamble previous   data
+ft_postamble history    data
 ft_postamble provenance
-ft_postamble savefig
-
-% add a menu to the figure, but only if the current figure does not have subplots
-menu_fieldtrip(gcf, cfg, false);
-
-if ~ft_nargout
-  % don't return anything
-  clear cfg
-end
 

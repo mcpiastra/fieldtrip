@@ -26,7 +26,7 @@ function [dap] = read_mpi_dap(filename)
 %
 % $Id$
 
-fid = fopen_or_error(filename, 'rb', 'ieee-le');
+fid = fopen(filename, 'rb', 'ieee-le');
 
 % read the file header
 filehdr        = readheader(fid);

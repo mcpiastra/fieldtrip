@@ -37,7 +37,7 @@ function [varargout] = ft_plot_patch(hdat, vdat, varargin)
 %   vdat = [vdat vdat(end:-1:1)+1];
 %   ft_plot_patch(hdat, vdat)
 %
-% See also FT_PLOT_VECTOR, PATCH, PLOT
+% See also FT_PLOT_VECTOR
 
 % Copyrights (C) 2015, Roemer van der Meij
 %

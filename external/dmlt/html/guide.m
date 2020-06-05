@@ -154,7 +154,7 @@ m.statistic
 % statistic function as in:
 m.statistic('accuracy')
 %%
-% Default crossvalidation behavior can be overridden using the 'type',
+% Default crossvalidation behaviour can be overridden using the 'type',
 % 'folds','proportion' and 'resample' fields. A few more examples:
 m = dml.crossvalidator('mva',{dml.standardizer dml.naive},'type','nfold','folds',10);
 %%
@@ -169,7 +169,7 @@ m = dml.crossvalidator('mva',{dml.standardizer dml.naive},'resample',true);
 %
 % One may also manually specify which samples belong to each fold using the
 % 'trainfolds' and or 'testfolds' fields. This overrides the previous
-% behaviors. For instance
+% behaviours. For instance
 m = dml.crossvalidator('mva',{dml.standardizer dml.naive},'trainfolds',{1:2:50 2:2:50});
 %%
 % creates a crossvalidator whose training folds consist of uneven and even

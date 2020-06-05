@@ -1,9 +1,9 @@
 function test_bug1764
 
-% MEM 3gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_prepare_singleshell ft_prepare_mesh
+% TEST ft_prepare_singleshell ft_prepare_mesh
 
 % This test is inspired by test test_tutorial_beamformer20120321 which uses
 % a call to ft_prepare_singleshell without specifying any cfg options. The
@@ -17,11 +17,10 @@ load(dccnpath('/home/common/matlab/fieldtrip/data/ftp/tutorial/beamformer/segmen
 stopwatch = tic;
 
 cfg = [];
-cfg.method = 'singleshell';
-headmodel = ft_prepare_headmodel(cfg, segmentedmri);
+vol = ft_prepare_singleshell(cfg, segmentedmri);
 
 elapsed = toc(stopwatch);
 
 if elapsed>60
-  error('ft_prepare_headmodel took too long, probably due to ft_prepare_mesh');
+  error('ft_prepare_singleshell took too long, probably due to ft_prepare_mesh');
 end

@@ -2,7 +2,9 @@ function test_bug2685
 
 % MEM 4gb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_scalpcurrentdensity ft_fetch_sens
+
+% TEST test_bug2686
+% TEST ft_scalpcurrentdensity ft_fetch_sens
 
 %% load data
 load(dccnpath('/home/common/matlab/fieldtrip/data/test/bug2685/bug2685.mat'));

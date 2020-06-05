@@ -31,7 +31,7 @@ function [elec] = read_bioimage_mgrid(mgridfile)
 % $Id$
 
 % define output
-elec.label = {}; % N x 1 cell-array
+elec.label = {}; % N x 1 cell array
 elec.elecpos = []; % N x 3 matrix
 
 % conditional variables
@@ -41,64 +41,64 @@ WaitForDim = 0;
 
 % open and read ascii-file line by line
 fileline = 0;
-fid = fopen_or_error(mgridfile,'r'); % open ascii-file
+fid = fopen(mgridfile,'r'); % open ascii-file
 while fileline >= 0 % read line by line
-
+  
   fileline = fgets(fid); % read a line
   if fileline > 0
-
+    
     % grid number
-    if contains(fileline,'# Electrode Grid ')
-      GridNr = sscanf(fileline(strfind(fileline, 'Grid '):end),'Grid %i');
+    if ~isempty(findstr(fileline,'# Electrode Grid '))
+      GridNr = sscanf(fileline(findstr(fileline, 'Grid '):end),'Grid %i');
       WaitForDescript = 1;
       WaitForDim = 1;
     end
-
+    
     % grid description
-    if contains(fileline,'#Description') && WaitForDescript
+    if ~isempty(findstr(fileline,'#Description')) && WaitForDescript
       nextfileline = fgets(fid);
       GridDescript = sscanf(nextfileline,'%s');
       WaitForDescript = 0;
     end
-
+    
     % grid dimension
-    if contains(fileline,'#Dimensions') && WaitForDim
+    if ~isempty(findstr(fileline,'#Dimensions')) && WaitForDim
       nextfileline = fgets(fid);
       GridDim = sscanf(nextfileline,'%i %i')'; % row & column
       WaitForDim = 0;
     end
-
+    
     % electrode number
-    if contains(fileline,'# Electrode ')
-      type = sscanf(fileline(strfind(fileline,'Electrode '):end),'Electrode %s');
+    if ~isempty(findstr(fileline,'# Electrode '))
+      type = sscanf(fileline(findstr(fileline,'Electrode '):end),'Electrode %s');
       if ~strcmp(type, 'Grid')
-        ElecNr = sscanf(fileline(strfind(fileline,'Electrode '):end),'Electrode %i %i')';
+        ElecNr = sscanf(fileline(findstr(fileline,'Electrode '):end),'Electrode %i %i')';
         WaitForPos = 1;
       end
     end
-
+    
     % electrode position
-    if contains(fileline,'#Position') && WaitForPos
+    if ~isempty(findstr(fileline,'#Position')) && WaitForPos
       nextfileline = fgets(fid);
       ElecPos = sscanf(nextfileline,'%f %f %f')'; % x, y, and z
       WaitForPos = 0;
     end
-
+    
     % electrode present
-    if contains(fileline,'#Electrode Present')
+    if ~isempty(findstr(fileline,'#Electrode Present'))
       nextfileline = fgets(fid);
       ElecPres = logical(sscanf(nextfileline,'%f'))'; % 1 = present; 0 = not present
       if ~ElecPres
         ElecPos = NaN(1,3);
       end
     end
-
+    
     % store
-    if contains(fileline,'#Value')
+    if ~isempty(findstr(fileline,'#Value'))
       elec.label{end+1,1} = [GridDescript num2str(GridDim(2) - ElecNr(2) + GridDim(2)*ElecNr(1))];
       elec.elecpos(end+1,:) = ElecPos;
     end
-
+    
   end % if fileline
 end % end of while loop
 fclose(fid);

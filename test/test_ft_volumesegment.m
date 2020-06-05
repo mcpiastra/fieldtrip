@@ -1,9 +1,9 @@
 function test_ft_volumesegment
 
-% MEM 2gb
+% MEM 2000mb
 % WALLTIME 01:00:00
 
-% DEPENDENCY ft_volumesegment  ft_read_mri
+% TEST ft_volumesegment  ft_read_mri
 
 % initial version by Lilla Magyari 2012
 

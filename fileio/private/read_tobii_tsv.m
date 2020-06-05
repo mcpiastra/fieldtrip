@@ -14,7 +14,7 @@ needdat = (nargin>1);
 if needhdr
   % get the original header details
   
-  fid = fopen_or_error(filename, 'rt');
+  fid = fopen(filename, 'rt');
   tsv = struct();
   ln  = 0;
   while ln<30 && ~feof(fid)
@@ -25,7 +25,7 @@ if needhdr
       [key, val] = strtok(line, ':');
       key = fixname(key);
       val = val(2:end); % skip the ':'
-      val = strtrim(val);
+      val = deblank2(val);
       tsv.(key) = val;
     end
     
@@ -55,7 +55,7 @@ elseif needdat
   
   % get the original header details
   tsv = hdr.orig;
-  fid = fopen_or_error(filename, 'rt');
+  fid = fopen(filename, 'rt');
   fseek(fid, tsv.datapointer, 'bof');
   
   cursample = 1;

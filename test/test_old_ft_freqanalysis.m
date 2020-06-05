@@ -5,7 +5,7 @@ function test_old_ft_freqanalysis
 
 
 function test_ft_freqanalysis
-% DEPENDENCY_FT_FREQANALYSIS
+% TEST_FT_FREQANALYSIS
 % This script tests the ft_freqanalysis functions using simulated data
 % A. Stolk and J.M. Schoffelen
 

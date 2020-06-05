@@ -1,6 +1,7 @@
 function inspect_bug1474
 
-% DEPENDENCY ft_rejectvisual
+% TEST inspect_bug1474
+% TEST ft_rejectvisual
 
 % this script tests ft_rejectvisual with cfg.method='summary' for the case
 % where the data only contains one channel

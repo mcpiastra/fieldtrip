@@ -43,7 +43,7 @@ function [sts] = ft_spiketriggeredspectrum_fft(cfg, data, spike)
 %
 % This function uses a NaN-aware spectral estimation technique, which will default to the
 % standard Matlab FFT routine if no NaNs are present. The fft_along_rows subfunction below
-% demonstrates the expected function behavior.
+% demonstrates the expected function behaviour.
 %
 % See FT_SPIKETRIGGEREDINTERPOLATION to remove segments of LFP around spikes.
 % See FT_SPIKETRIGGEREDSPECTRUM_CONVOL for an alternative implementation based
@@ -138,11 +138,8 @@ if nargin==2
   end    
   
   % select the data and convert to a spike structure
-  tmpcfg = [];
-  tmpcfg.channel = cfg.spikechannel;
-  data_spk = ft_selectdata(tmpcfg, data);
-  tmpcfg.channel = cfg.channel;
-  data     = ft_selectdata(tmpcfg, data); % leave only LFP
+  data_spk = ft_selectdata(data,'channel', cfg.spikechannel);
+  data     = ft_selectdata(data,'channel', cfg.channel); % leave only LFP
   spike    = ft_checkdata(data_spk,'datatype', 'spike');
   clear data_spk % remove the continuous data
 else

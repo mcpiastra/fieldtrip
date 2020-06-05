@@ -47,18 +47,20 @@ function mri = MRIread(fstring,headeronly)
 % Original Author: Doug Greve
 % CVS Revision Info:
 %    $Author: greve $
-%    $Date: 2012/02/14 21:59:33 $
-%    $Revision: 1.25 $
+%    $Date: 2007/11/01 17:48:11 $
+%    $Revision$
 %
-% Copyright © 2011 The General Hospital Corporation (Boston, MA) "MGH"
+% Copyright (C) 2002-2007,
+% The General Hospital Corporation (Boston, MA). 
+% All rights reserved.
 %
-% Terms and conditions for use, reproduction, distribution and contribution
-% are found in the 'FreeSurfer Software License Agreement' contained
-% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
+% Distribution, usage and copying of this software is covered under the
+% terms found in the License Agreement file named 'COPYING' found in the
+% FreeSurfer source code root directory, and duplicated here:
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
 %
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
-%
-% Reporting: freesurfer@nmr.mgh.harvard.edu
+% General inquiries: freesurfer@nmr.mgh.harvard.edu
+% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
 %
 
 
@@ -72,8 +74,7 @@ if(exist('headeronly')~=1) headeronly = 0; end
 
 [fspec fstem fmt] = MRIfspec(fstring);
 if(isempty(fspec))
-  err = sprintf('ERROR: cannot determine format of %s (%s)\n',fstring,mfilename);
-  error(err);
+  fprintf('ERROR: cannot determine format of %s\n',fstring);
   return;
 end
 
@@ -146,7 +147,7 @@ switch(fmt)
   else            mri.vol = [];
   end
   volsz([1 2]) = volsz([2 1]); % Make consistent. No effect when rows=cols
-  tr = 1000*hdr.dime.pixdim(5); % msec
+  tr = hdr.dime.pixdim(5); % Keep in msec
   flip_angle = 0;
   te = 0;
   ti = 0;
@@ -165,12 +166,8 @@ switch(fmt)
   indnz = find(volsz~=0);
   volsz = volsz(indnz);
   volsz = volsz(:)'; % just make sure it's a row vect
-  % This handles the case where data has > 4 dims
-  % Just puts all data into dim 4.
-  if(~headeronly) 
-    hdr.vol = reshape(hdr.vol,[volsz(1) volsz(2) volsz(3) prod(volsz(4:end))]);
-    mri.vol = permute(hdr.vol,[2 1 3 4]);
-  else mri.vol = [];
+  if(~headeronly) mri.vol = permute(hdr.vol,[2 1 3 4]);
+  else            mri.vol = [];
   end
   volsz([1 2]) = volsz([2 1]); % Make consistent. No effect when rows=cols
   tr = hdr.pixdim(5); % already msec
@@ -255,13 +252,10 @@ mri.vox2ras1 = vox2ras_0to1(M);
 % Matrix of direction cosines
 mri.Mdc = [M(1:3,1)/mri.xsize M(1:3,2)/mri.ysize M(1:3,3)/mri.zsize];
 
-% Vector of voxel resolutions (Row-Col-Slice)
-mri.volres = [mri.ysize mri.xsize mri.zsize];
+% Vector of voxel resolutions (Col-Row-Slice)
+mri.volres = [mri.xsize mri.ysize mri.zsize];
 
-% Have to swap rows and columns back
-voldim = [mri.volsize(2) mri.volsize(1) mri.volsize(3)]; %[ncols nrows nslices] 
-volres = [mri.volres(2)  mri.volres(1)  mri.volres(3)];  %[dcol drow dslice] 
-mri.tkrvox2ras = vox2ras_tkreg(voldim,volres);
+mri.tkrvox2ras = vox2ras_tkreg(mri.volsize,mri.volres);
 
 
 return;

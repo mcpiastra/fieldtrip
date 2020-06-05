@@ -1,9 +1,9 @@
 function test_bug1163
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_timelockbaseline
+% TEST test_bug1163 ft_timelockbaseline
 
 % the problem seems to be that ft_timelockbaseline explicitly only checks
 % for a avg field

@@ -3,9 +3,9 @@ function test_bug3048
 % MEM 2gb
 % WALLTIME 00:20:00
 
-% DEPENDENCY ft_preamble ft_preamble_randomseed ft_dipolesimulation
-% DEPENDENCY ft_freqsimulation ft_connectivitysimulation ft_statistics_montecarlo
-% DEPENDENCY ft_freqstatistics ft_timelockstatistics
+% TEST ft_preamble ft_preamble_randomseed ft_dipolesimulation
+% TEST ft_freqsimulation ft_connectivitysimulation ft_statistics_montecarlo
+% TEST ft_freqstatistics ft_timelockstatistics
 
 %%
 % test ft_freqsimulation
@@ -33,7 +33,7 @@ cfg.params(:,:,1) = [
   0.0  0.9  0.5 ;
   0.4  0.0  0.5];
 cfg.params(:,:,2) = [
-  -0.5  0.0  0.0;
+ -0.5  0.0  0.0;
   0.0 -0.8  0.0;
   0.0  0.0 -0.2];
 cfg.noisecov = [
@@ -84,15 +84,14 @@ design = [ones(1,10) ones(1,10)*2;1:10 1:10];
 dat    = randn(5,20);
 
 [stat1, cfg1] = ft_statistics_montecarlo(cfg, dat, design);
-s = rng; % remember the random number generator state
 [stat2, cfg2] = ft_statistics_montecarlo(cfg, dat, design);
-rng(s); % restore the random number generator state
+cfg.randomseed = cfg2.callinfo.randomseed;
 [stat3, cfg3] = ft_statistics_montecarlo(cfg, dat, design);
 
 assert(~isequal(stat1.prob, stat2.prob));
 assert( isequal(stat2.prob, stat3.prob));
 
-%%
+%% 
 % test the higher level stats functions
 cfg.randomseed = [];
 cfg.design     = design;
@@ -102,9 +101,8 @@ freq.freq      = 1:10;
 freq.dimord    = 'rpt_chan_freq';
 for k = 1:5, freq.label{k} = sprintf('chan%02d',k); end
 stat1 = ft_freqstatistics(cfg, freq);
-s = rng; % remember the random number generator state
 stat2 = ft_freqstatistics(cfg, freq);
-rng(s); % restore the random number generator state
+cfg.randomseed = stat2.cfg.callinfo.randomseed;
 stat3 = ft_freqstatistics(cfg, freq);
 assert(~isequal(stat1.prob, stat2.prob));
 assert( isequal(stat2.prob, stat3.prob));
@@ -115,9 +113,9 @@ tlck.time      = 1:10;
 tlck.label     = freq.label;
 tlck.dimord    = 'rpt_chan_time';
 stat1 = ft_timelockstatistics(cfg, tlck);
-s = rng; % remember the random number generator state
 stat2 = ft_timelockstatistics(cfg, tlck);
-rng(s); % restore the random number generator state
+cfg.randomseed = stat2.cfg.callinfo.randomseed;
 stat3 = ft_timelockstatistics(cfg, tlck);
 assert(~isequal(stat1.prob, stat2.prob));
 assert( isequal(stat2.prob, stat3.prob));
+

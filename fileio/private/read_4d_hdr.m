@@ -35,7 +35,11 @@ end
 
 if ~isempty(datafile),
   %always big endian  
-  fid = fopen_or_error(datafile, 'r', 'b');
+  fid = fopen(datafile, 'r', 'b');
+  
+  if fid == -1
+    ft_error('Cannot open file %s', datafile);
+  end
   
   fseek(fid, 0, 'eof');
   header_end = ftell(fid);
@@ -207,7 +211,7 @@ if ~isempty(datafile),
         %here we go: check whether this applies to the whole PDF weight table
         fp = ftell(fid);
         fclose(fid);
-        fid = fopen_or_error(datafile, 'r', 'l');
+        fid = fopen(datafile, 'r', 'l');
         fseek(fid, fp, 'bof');
         for k = 1:Nchan
           header.process(np).step(ns).Weights(k,:) = fread(fid, 23, 'float32=>float32')';
@@ -226,7 +230,11 @@ end
 %end read header
 
 %read config file
-fid = fopen_or_error(configfile, 'r', 'b');
+fid = fopen(configfile, 'r', 'b');
+
+if fid == -1
+  ft_error('Cannot open config file');
+end
 
 header.config_data.version           = fread(fid, 1, 'uint16=>uint16');
 site_name                            = char(fread(fid, 32, 'uchar'))';
@@ -499,8 +507,8 @@ fclose(fid);
 %end read config file
 
 header.header_data.FileDescriptor = 0; %no obvious field to take this from
-header.header_data.Events         = 1; %no obvious field to take this from
-header.header_data.EventCodes     = 0; %no obvious field to take this from
+header.header_data.Events         = 1;%no obvious field to take this from
+header.header_data.EventCodes     = 0;%no obvious field to take this from
 
 if isfield(header, 'channel_data'),
   header.ChannelGain        = double([header.config.channel_data([header.channel_data.chan_no]).gain]');

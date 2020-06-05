@@ -1,8 +1,14 @@
 function test_tutorial_clusterpermutationtimelock(dataset, datadir)
 
-% MEM 3gb
+% MEM 2gb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_timelockanalysis ft_multiplotER ft_singleplotER ft_timelockstatistics ft_topoplotER ft_clusterplot ft_megplanar ft_combineplanar
+
+% TEST test_tutorial_eventrelatedstatistics
+% TEST ft_timelockanalysis ft_multiplotER ft_singleplotER ft_timelockstatistics
+% TEST ft_topoplotER ft_clusterplot ft_megplanar ft_combineplanar
+
+global ft_default;
+ft_default.feedback = 'no';
 
 if nargin==0
   dataset = dccnpath('/home/common/matlab/fieldtrip/data/Subject01.ds');

@@ -5,7 +5,7 @@ function [trl, event] = ft_trialfun_brainvision_segmented(cfg)
 %
 % Use as 
 %   cfg          = [];
-%   cfg.dataset  = 'filename.vhdr';
+%   cfg.dataset  = '<datasetname>.vhdr';
 %   cfg.trialfun = 'ft_trialfun_brainvision_segmented';
 %   cfg  = ft_definetrial(cfg);
 %   data = ft_preprocessing(cfg);

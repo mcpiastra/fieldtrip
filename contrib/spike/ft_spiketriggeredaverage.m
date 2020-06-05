@@ -76,12 +76,14 @@ cfg = ft_checkconfig(cfg, 'allowed', {'timwin', 'spikechannel', 'channel', 'keep
 
 % autodetect the spike channels
 ntrial = length(data.trial);
-nchans = length(data.label);
-sc = zeros(nchans,ntrial);
+nchans  = length(data.label);
+spikechan = zeros(nchans,1);
 for i=1:ntrial
-    sc(:,i) = all(mod(data.trial{i},1) == 0,2);
+  for j=1:nchans
+    spikechan(j) = spikechan(j) + all(data.trial{i}(j,:)==0 | data.trial{i}(j,:)==1 | data.trial{i}(j,:)==2);
+  end
 end
-spikechan = (sum(sc,2)==ntrial);
+spikechan = (spikechan==ntrial);
 
 % determine the channels to be averaged
 cfg.channel = ft_channelselection(cfg.channel, data.label);
@@ -108,7 +110,7 @@ end
 % get the number of trials or change DATA according to cfg.trials
 if  strcmp(cfg.trials,'all')
   cfg.trials = 1:length(data.trial);
-elseif islogical(cfg.trials) || all(cfg.trials==0 | cfg.trials==1)
+elseif islogical(cfg.trials)
   cfg.trials = find(cfg.trials);
 end
 cfg.trials = sort(cfg.trials(:));

@@ -1,9 +1,9 @@
 function test_bug3035
 
-% MEM 2gb
+% MEM 1000mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_rejectcomponent ft_apply_montage
+% TEST ft_rejectcomponent ft_apply_montage
 
 %% load the data
 

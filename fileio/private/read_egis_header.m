@@ -36,7 +36,10 @@ function [fhdr,chdr,ename,cnames,fcom,ftext] = read_egis_header(filename)
 %
 % $Id$
 
-fh=fopen_or_error([filename],'r');
+fh=fopen([filename],'r');
+if fh==-1
+  ft_error('wrong filename')
+end
 
 %Prep file for reading
 fhdr=zeros(1,23);

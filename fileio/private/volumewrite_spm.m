@@ -10,7 +10,7 @@ function [Va] = volumewrite_spm(filename, data, transform, spmversion)
 % Copyright (C) 2011, Jan-Mathijs Schoffelen
 
 if nargin<4 || isempty(spmversion)
-  spmversion = 'spm12';
+  spmversion = 'spm8';
 end
 
 % check whether the required SPM toolbox is available

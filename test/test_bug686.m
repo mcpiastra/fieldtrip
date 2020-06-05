@@ -3,9 +3,13 @@ function test_bug686
 % MEM 2gb
 % WALLTIME 00:30:00
 
-% DEPENDENCY ft_convert_units ft_prepare_headmodel ft_prepare_leadfield ft_prepare_sourcemodel ft_headmodel_openmeeg headsurface
+% TEST ft_convert_units ft_prepare_headmodel ft_prepare_leadfield ft_prepare_sourcemodel ft_headmodel_openmeeg headsurface
 
-[pnt, tri] = mesh_sphere(162);
+% use FieldTrip defaults instead of personal defaults
+global ft_default;
+ft_default = [];
+
+[pnt, tri] = icosahedron162;
 pnt = pnt .* 10;           % convert to cm
 sel = find(pnt(:,3)>0);    % take the upper hemisphere
 
@@ -229,10 +233,10 @@ eeg_leadfield = {};
 for i=1:length(eegvol)
   for j=1:length(units)
     cfg             = [];
-    cfg.headmodel   = eval(sprintf('%s_%s', eegvol{i}, units{j}));
+    cfg.vol         = eval(sprintf('%s_%s', eegvol{i}, units{j}));
     cfg.elec        = eval(sprintf('elec_%s', units{j}));
-    cfg.sourcemodel.pos = pos{j};
-    cfg.sourcemodel.unit = units{j};
+    cfg.grid.pos    = pos{j};
+    cfg.sourceunits = units{j};
     grid = ft_prepare_leadfield(cfg);
     eeg_leadfield{i,j} = grid.leadfield{1};
   end
@@ -243,10 +247,10 @@ meg_leadfield = {};
 for i=1:length(megvol)
   for j=1:length(units)
     cfg             = [];
-    cfg.headmodel   = eval(sprintf('%s_%s', megvol{i}, units{j}));
+    cfg.vol         = eval(sprintf('%s_%s', megvol{i}, units{j}));
     cfg.grad        = eval(sprintf('grad_%s', units{j}));
-    cfg.sourcemodel.pos = pos{j};
-    cfg.sourcemodel.unit = units{j};
+    cfg.grid.pos    = pos{j};
+    cfg.sourceunits = units{j};
     grid = ft_prepare_leadfield(cfg);
     meg_leadfield{i,j} = grid.leadfield{1};
   end

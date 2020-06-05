@@ -71,7 +71,7 @@
 
 #else
 /* the platform cannot be determined at compile time */
-#error "Unknown platform - please report the platform details to http://www.fieldtriptoolbox.org"
+#error "Unknown platform - please report the platform details to http://fieldtrip.fcdonders.nl"
 #endif
 
 #endif /* PLATFORM_H */

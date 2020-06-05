@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2015, Robert Oostenveld
  *
- * This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
+ * This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
  * for the documentation and details.
  *
  *    FieldTrip is free software: you can redistribute it and/or modify

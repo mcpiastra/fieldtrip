@@ -5,7 +5,7 @@ function [source] = ft_sourceanalysis(cfg, data, baseline)
 %
 % Use as
 %   [source] = ft_sourceanalysis(cfg, freq)
-% or
+% or 
 %   [source] = ft_sourceanalysis(cfg, timelock)
 %
 % where the second input argument with the data should be organised in a structure
@@ -27,30 +27,31 @@ function [source] = ft_sourceanalysis(cfg, data, baseline)
 % methods are for time domain data. ELORETA can be used both for time, frequency and
 % time-frequency domain data.
 %
-% The complete grid with dipole positions and optionally precomputed leadfields is
-% constructed using FT_PREPARE_SOURCEMODEL. It can be specified as as a regular 3-D
-% grid that is aligned with the axes of the head coordinate system using
-%   cfg.xgrid               = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
-%   cfg.ygrid               = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
-%   cfg.zgrid               = vector (e.g.   0:1:20) or 'auto' (default = 'auto')
-%   cfg.resolution          = number (e.g. 1 cm) for automatic grid generation
+% The source model to use in the reconstruction should be specified as
+%   cfg.grid            = structure, see FT_PREPARE_SOURCEMODEL or FT_PREPARE_LEADFIELD
+% The positions of the dipoles can be specified as a regular 3-D
+% grid that is aligned with the axes of the head coordinate system
+%   cfg.grid.xgrid      = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
+%   cfg.grid.ygrid      = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
+%   cfg.grid.zgrid      = vector (e.g.   0:1:20) or 'auto' (default = 'auto')
+%   cfg.grid.resolution = number (e.g. 1 cm) for automatic grid generation
+%   cfg.grid.inside     = N*1 vector with boolean value whether grid point is inside brain (optional)
+%   cfg.grid.dim        = [Nx Ny Nz] vector with dimensions in case of 3-D grid (optional)
 % If the source model destribes a triangulated cortical sheet, it is described as
-%   cfg.sourcemodel.pos     = N*3 matrix with the vertex positions of the cortical sheet
-%   cfg.sourcemodel.tri     = M*3 matrix that describes the triangles connecting the vertices
+%   cfg.grid.pos        = N*3 matrix with the vertex positions of the cortical sheet
+%   cfg.grid.tri        = M*3 matrix that describes the triangles connecting the vertices
 % Alternatively the position of a few dipoles at locations of interest can be
-% user-specified, for example obtained from an anatomical or functional MRI
-%   cfg.sourcemodel.pos     = N*3 matrix with position of each source
-%   cfg.sourcemodel.inside  = N*1 vector with boolean value whether grid point is inside brain (optional)
-%   cfg.sourcemodel.dim     = [Nx Ny Nz] vector with dimensions in case of 3-D grid (optional)
+% specified, for example obtained from an anatomical or functional MRI
+%   cfg.grid.pos        = N*3 matrix with position of each source
 %
 % Besides the source positions, you may also include previously computed
-% spatial filters and/or leadfields using
-%   cfg.sourcemodel.filter
-%   cfg.sourcemodel.leadfield
+% spatial filters and/or leadfields like this
+%   cfg.grid.filter
+%   cfg.grid.leadfield
 %
 % The following strategies are supported to obtain statistics for the source parameters using
 % multiple trials in the data, either directly or through a resampling-based approach
-%   cfg.rawtrial      = 'no' or 'yes'   construct filter from single trials, apply to single trials. Note that you also may want to set cfg.keeptrials='yes' to keep all trial information, especially if using in combination with sourcemodel.filter
+%   cfg.rawtrial      = 'no' or 'yes'   construct filter from single trials, apply to single trials. Note that you also may want to set cfg.keeptrials='yes' to keep all trial information, especially if using in combination with grid.filter
 %   cfg.jackknife     = 'no' or 'yes'   jackknife resampling of trials
 %   cfg.pseudovalue   = 'no' or 'yes'   pseudovalue resampling of trials
 %   cfg.bootstrap     = 'no' or 'yes'   bootstrap resampling of trials
@@ -70,18 +71,13 @@ function [source] = ft_sourceanalysis(cfg, data, baseline)
 %   cfg.numrandomization   = number, e.g. 500
 %   cfg.numpermutation     = number, e.g. 500 or 'all'
 %
-% If you have not specified a sourcemodel with pre-computed leadfields, the leadfield
-% for each source position will be computed on the fly. In that case you can modify
-% the leadfields by reducing the rank (i.e. remove the weakest orientation), or by
-% normalizing each column.
-%   cfg.reducerank      = 'no', or number (default = 3 for EEG, 2 for MEG)
-%   cfg.backproject     = 'yes' or 'no',  determines when reducerank is applied whether the 
-%                         lower rank leadfield is projected back onto the original linear 
-%                         subspace, or not (default = 'yes')
-%   cfg.normalize       = 'yes' or 'no' (default = 'no')
-%   cfg.normalizeparam  = depth normalization parameter (default = 0.5)
-%   cfg.weight          = number or Nx1 vector, weight for each dipole position to compensate 
-%                         for the size of the corresponding patch (default = 1)
+% If you have not specified a grid with pre-computed leadfields,
+% the leadfield for each grid location will be computed on the fly.
+% In that case you can modify the leadfields by reducing the rank
+% (i.e.  remove the weakest orientation), or by normalizing each
+% column.
+%   cfg.reducerank  = 'no', or number (default = 3 for EEG, 2 for MEG)
+%   cfg.normalize   = 'no' or 'yes' (default = 'no')
 %
 % Other configuration options are
 %   cfg.channel       = Nx1 cell-array with selection of channels (default = 'all'),
@@ -89,8 +85,6 @@ function [source] = ft_sourceanalysis(cfg, data, baseline)
 %   cfg.frequency     = single number (in Hz)
 %   cfg.latency       = single number in seconds, for time-frequency analysis
 %   cfg.lambda        = number or empty for automatic default
-%   cfg.kappa         = number or empty for automatic default
-%   cfg.tol           = number or empty for automatic default
 %   cfg.refchan       = reference channel label (for coherence)
 %   cfg.refdip        = reference dipole location (for coherence)
 %   cfg.supchan       = suppressed channel label(s)
@@ -107,8 +101,10 @@ function [source] = ft_sourceanalysis(cfg, data, baseline)
 %   cfg.headmodel     = structure with volume conduction model, see FT_PREPARE_HEADMODEL
 %
 % The EEG or MEG sensor positions can be present in the data or can be specified as
-%   cfg.elec          = structure with electrode positions or filename, see FT_READ_SENS
-%   cfg.grad          = structure with gradiometer definition or filename, see FT_READ_SENS
+%   cfg.elec          = structure with electrode positions, see FT_DATATYPE_SENS
+%   cfg.grad          = structure with gradiometer definition, see FT_DATATYPE_SENS
+%   cfg.elecfile      = name of file containing the electrode positions, see FT_READ_SENS
+%   cfg.gradfile      = name of file containing the gradiometer definition, see FT_READ_SENS
 %
 % To facilitate data-handling and distributed computing you can use
 %   cfg.inputfile   =  ...
@@ -176,70 +172,31 @@ if hasbaseline
 end
 
 % check that the input cfg is valid for this function
-cfg = ft_checkconfig(cfg, 'renamed',    {'toilim', 'latency'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'foilim', 'frequency'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'jacknife', 'jackknife'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'refchannel', 'refchan'});
-cfg = ft_checkconfig(cfg, 'renamedval', {'method', 'power',           'dics'});
-cfg = ft_checkconfig(cfg, 'renamedval', {'method', 'coh_refchan',     'dics'});
-cfg = ft_checkconfig(cfg, 'renamedval', {'method', 'coh_refdip',      'dics'});
-cfg = ft_checkconfig(cfg, 'renamedval', {'method', 'dics_cohrefchan', 'dics'});
-cfg = ft_checkconfig(cfg, 'renamedval', {'method', 'dics_cohrefdip',  'dics'});
-cfg = ft_checkconfig(cfg, 'forbidden',  {'parallel', 'trials'});
-cfg = ft_checkconfig(cfg, 'forbidden',  {'foi', 'toi'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'hdmfile', 'headmodel'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'vol',     'headmodel'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'grid',    'sourcemodel'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'elecfile', 'elec'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'gradfile', 'grad'});
-cfg = ft_checkconfig(cfg, 'renamed',    {'optofile', 'opto'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'toilim', 'latency'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'foilim', 'frequency'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'jacknife',   'jackknife'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'refchannel', 'refchan'});
+cfg = ft_checkconfig(cfg, 'renamedval',  {'method', 'power',           'dics'});
+cfg = ft_checkconfig(cfg, 'renamedval',  {'method', 'coh_refchan',     'dics'});
+cfg = ft_checkconfig(cfg, 'renamedval',  {'method', 'coh_refdip',      'dics'});
+cfg = ft_checkconfig(cfg, 'renamedval',  {'method', 'dics_cohrefchan', 'dics'});
+cfg = ft_checkconfig(cfg, 'renamedval',  {'method', 'dics_cohrefdip',  'dics'});
+cfg = ft_checkconfig(cfg, 'forbidden',   {'parallel', 'trials'});
+cfg = ft_checkconfig(cfg, 'forbidden', {'foi', 'toi'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'hdmfile', 'headmodel'});
+cfg = ft_checkconfig(cfg, 'renamed',     {'vol',     'headmodel'});
 
 % determine the type of input data
 isfreq     = ft_datatype(data, 'freq');
 iscomp     = ft_datatype(data, 'comp');
 istimelock = ft_datatype(data, 'timelock');
-if ~any([isfreq iscomp istimelock])
+if all(~[isfreq iscomp istimelock])
   ft_error('input data is not recognized');
 end
 
 % set the defaults
-if istimelock
-  cfg.method = ft_getopt(cfg, 'method', 'lcmv');
-elseif isfreq
-  cfg.method = ft_getopt(cfg, 'method', 'dics');
-else
-  cfg.method = ft_getopt(cfg, 'method', []);
-end
-
-% put the low-level options pertaining to the source reconstruction method in their own field
-cfg = ft_checkconfig(cfg, 'createsubcfg',  cfg.method);
-% move some fields from cfg.method back to the top-level configuration
-cfg = ft_checkconfig(cfg, 'createtopcfg', cfg.method);
-
-% put the low-level options pertaining to the dipole grid in their own field
-cfg = ft_checkconfig(cfg, 'renamed', {'tightgrid', 'tight'});  % this is moved to cfg.sourcemodel.tight by the subsequent createsubcfg
-cfg = ft_checkconfig(cfg, 'renamed', {'sourceunits', 'unit'}); % this is moved to cfg.sourcemodel.unit  by the subsequent createsubcfg
-
-% put the low-level options pertaining to the sourcemodel in their own field
-cfg = ft_checkconfig(cfg, 'createsubcfg', {'sourcemodel'});
-% move some fields from cfg.sourcemodel back to the top-level configuration
-cfg = ft_checkconfig(cfg, 'createtopcfg', {'sourcemodel'});
-
-% get the low-level options for the inverse estimation method, these are method specific
-cfg.(cfg.method).keepfilter    = ft_getopt(cfg.(cfg.method), 'keepfilter',    'no');
-cfg.(cfg.method).keepcsd       = ft_getopt(cfg.(cfg.method), 'keepcsd',       'no');
-cfg.(cfg.method).keepmom       = ft_getopt(cfg.(cfg.method), 'keepmom',       'yes');
-cfg.(cfg.method).projectnoise  = ft_getopt(cfg.(cfg.method), 'projectnoise',  'no');
-cfg.(cfg.method).feedback      = ft_getopt(cfg.(cfg.method), 'feedback',      'text');
-cfg.(cfg.method).lambda        = ft_getopt(cfg.(cfg.method), 'lambda',        []);
-cfg.(cfg.method).kappa         = ft_getopt(cfg.(cfg.method), 'kappa',         []);
-cfg.(cfg.method).tol           = ft_getopt(cfg.(cfg.method), 'tol',           []);
-cfg.(cfg.method).invmethod     = ft_getopt(cfg.(cfg.method), 'invmethod',     []);
-cfg.(cfg.method).powmethod     = ft_getopt(cfg.(cfg.method), 'powmethod',     []);
-
-% get any further options
-cfg.keepleadfield    = ft_getopt(cfg, 'keepleadfield', 'no');
 cfg.keeptrials       = ft_getopt(cfg, 'keeptrials', 'no');
+cfg.keepleadfield    = ft_getopt(cfg, 'keepleadfield', 'no');
 cfg.trialweight      = ft_getopt(cfg, 'trialweight', 'equal');
 cfg.jackknife        = ft_getopt(cfg, 'jackknife',   'no');
 cfg.pseudovalue      = ft_getopt(cfg, 'pseudovalue', 'no');
@@ -257,6 +214,32 @@ cfg.supdip           = ft_getopt(cfg, 'supdip',        []);
 cfg.latency          = ft_getopt(cfg, 'latency',   'all');
 cfg.frequency        = ft_getopt(cfg, 'frequency', 'all');
 
+if istimelock
+  cfg.method = ft_getopt(cfg, 'method', 'lcmv');
+elseif isfreq
+  cfg.method = ft_getopt(cfg, 'method', 'dics');
+else
+  cfg.method = ft_getopt(cfg, 'method', []);
+end
+
+% put the low-level options pertaining to the source reconstruction method in their own field
+cfg = ft_checkconfig(cfg, 'createsubcfg',  cfg.method);
+
+% put the low-level options pertaining to the dipole grid in their own field
+cfg = ft_checkconfig(cfg, 'renamed', {'tightgrid', 'tight'});  % this is moved to cfg.grid.tight by the subsequent createsubcfg
+cfg = ft_checkconfig(cfg, 'renamed', {'sourceunits', 'unit'}); % this is moved to cfg.grid.unit  by the subsequent createsubcfg
+cfg = ft_checkconfig(cfg, 'createsubcfg', 'grid');
+
+cfg.(cfg.method).keepfilter    = ft_getopt(cfg.(cfg.method), 'keepfilter',    'no');
+cfg.(cfg.method).keepcsd       = ft_getopt(cfg.(cfg.method), 'keepcsd',       'no');
+cfg.(cfg.method).keepmom       = ft_getopt(cfg.(cfg.method), 'keepmom',       'yes');
+cfg.(cfg.method).projectnoise  = ft_getopt(cfg.(cfg.method), 'projectnoise',  'no');
+cfg.(cfg.method).feedback      = ft_getopt(cfg.(cfg.method), 'feedback',      'text');
+cfg.(cfg.method).lambda        = ft_getopt(cfg.(cfg.method), 'lambda',        []);
+cfg.(cfg.method).powmethod     = ft_getopt(cfg.(cfg.method), 'powmethod',     []);
+cfg.(cfg.method).normalize     = ft_getopt(cfg.(cfg.method), 'normalize',     'no');
+cfg.(cfg.method).reducerank     = ft_getopt(cfg.(cfg.method), 'reducerank',    []); % the default for this is handled below
+
 if hasbaseline && (strcmp(cfg.randomization, 'no') && strcmp(cfg.permutation, 'no'))
   ft_error('input of two conditions only makes sense if you want to randomize or permute');
 elseif ~hasbaseline && (strcmp(cfg.randomization, 'yes') || strcmp(cfg.permutation, 'yes'))
@@ -271,8 +254,8 @@ if sum([strcmp(cfg.jackknife, 'yes'), strcmp(cfg.bootstrap, 'yes'), strcmp(cfg.p
   ft_error('jackknife, bootstrap, pseudovalue, singletrial, rawtrial, randomization and permutation are mutually exclusive');
 end
 
-if strcmp(cfg.rawtrial, 'yes') && isfield(cfg, 'sourcemodel') && ~isfield(cfg.sourcemodel, 'filter')
-  ft_warning('Using each trial to compute its own filter is not currently recommended. Use this option only with precomputed filters in cfg.sourcemodel.filter');
+if strcmp(cfg.rawtrial,'yes') && isfield(cfg,'grid') && ~isfield(cfg.grid,'filter')
+  ft_warning('Using each trial to compute its own filter is not currently recommended. Use this option only with precomputed filters in grid.filter');
 end
 
 % start with an empty output structure
@@ -294,9 +277,9 @@ elseif isfreq
   
   % ensure that the refchan is kept, if present
   if isfield(tmpcfg, 'refchan') && ~isempty(tmpcfg.refchan) && isempty(match_str(tmpcfg.channel, tmpcfg.refchan))
-    hasrefchan = true;
+    hasrefchan = 1;
   else
-    hasrefchan = false;
+    hasrefchan = 0;
   end
   
   if hasrefchan
@@ -324,9 +307,21 @@ elseif isfreq
   if isfield(data, 'time')
     cfg.latency   = mean(cfg.latency);
   end
+  
+elseif iscomp
+  % FIXME, select the components here
+  % FIXME, add the component numbers to the output
+  ft_error('the use of component data in ft_sourceanalysis is disabled for the time being: if you encounter this error message and you need this functionality please contact the FieldTrip development team');
 end
 
-if isfreq && isfield(data, 'labelcmb')
+convertcomp = false;
+if iscomp && (strcmp(cfg.method, 'rv') || strcmp(cfg.method, 'music'))
+  % these timelock methods are also supported for frequency or component data
+  if iscomp
+    convertcomp = true;
+    % the conversion will be done below, after the latency and channel selection
+  end
+elseif isfreq && isfield(data, 'labelcmb')
   % ensure that the cross-spectral densities are chan_chan_therest,
   % otherwise the latency and frequency selection could fail, so we don't
   % need to worry about linearly indexed cross-spectral densities below
@@ -336,116 +331,67 @@ if isfreq && isfield(data, 'labelcmb')
   data = ft_checkdata(data, 'cmbrepresentation', 'full');
 end
 
-% ensure that a selection of channels is made consistent with the data
-cfg.channel = ft_channelselection(cfg.channel, data.label);
+if isfreq
+  % as per the call to ft_checkdata above, the dimord of the freq-data is
+  % either (rpt_)chan_chan_otherstuff, or rpttap_chan_otherstuff. The
+  % former is with cross-spectra, the latter is with fourierspctrm
+  
+  % previously there was some explicit dimord checking here, but I think
+  % with the more consistent data handling it is not necessary anymore.
+end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% prepare the sourcemodel, headmodel, sensors and/or leadfields
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% collect and preprocess the electrodes/gradiometer and head model
+[headmodel, sens, cfg] = prepare_headmodel(cfg, data);
 
-if isfield(cfg.sourcemodel, 'filter')
-  ft_notice('using precomputed filters, not computing any leadfields');
-  sourcemodel = keepfields(cfg.sourcemodel, {'pos', 'tri', 'dim', 'inside', 'filter', 'filterdimord', 'label', 'cfg'});
-  
-  if ~isfield(sourcemodel, 'label')
-    ft_warning('the labels are missing for the precomputed filters, assuming that they were computed with the same channel selection');
-    sourcemodel.label = cfg.channel;
-  end
-  
-  % select the channels corresponding to the data and the user configuration
-  tmpcfg = keepfields(cfg, 'channel');
-  sourcemodel = ft_selectdata(tmpcfg, sourcemodel);
-  
-  % sort the channels to be consistent with the data
-  [dum, chansel] = match_str(data.label, sourcemodel.label);
-  sourcemodel.label = sourcemodel.label(chansel);
-  for i=1:numel(sourcemodel.filter)
-    if ~isempty(sourcemodel.filter{i})
-      sourcemodel.filter{i} = sourcemodel.filter{i}(:, chansel);
-    end
-  end
-  
-  % ensure that the channels are consistent with the data
-  assert(isequal(sourcemodel.label(:), cfg.channel(:)), 'cannot match the channels in the sourcemodel to those in the data')
-  
-  % no forward computations are needed
-  headmodel = [];
-  sens = [];
-  cfg = removefields(cfg, {'headmodel', 'elec', 'grad'});
-  
-elseif isfield(cfg.sourcemodel, 'leadfield')
-  ft_notice('using precomputed leadfields');
-  sourcemodel = keepfields(cfg.sourcemodel, {'pos', 'tri', 'dim', 'inside', 'leadfield', 'leadfielddimord', 'label', 'cfg'});
-  
-  if ~isfield(sourcemodel, 'label')
-    ft_warning('the labels are missing for the precomputed leadfields, assuming that they were computed with the same channel selection');
-    sourcemodel.label = cfg.channel;
-  end
-  
-  % select the channels corresponding to the data and the user configuration
-  tmpcfg = keepfields(cfg, 'channel');
-  sourcemodel = ft_selectdata(tmpcfg, sourcemodel);
-  
-  % sort the channels to be consistent with the data
-  [dum, chansel] = match_str(data.label, sourcemodel.label);
-  sourcemodel.label = sourcemodel.label(chansel);
-  for i=1:numel(sourcemodel.leadfield)
-    if ~isempty(sourcemodel.leadfield{i})
-      sourcemodel.leadfield{i} = sourcemodel.leadfield{i}(chansel, :);
-    end
-  end
-  
-  % ensure that the channels are consistent with the data
-  assert(isequal(sourcemodel.label(:), cfg.channel(:)), 'cannot match the channels in the sourcemodel to those in the data')
-  
-  % no forward computations are needed
-  headmodel = [];
-  sens = [];
-  cfg = removefields(cfg, {'headmodel', 'elec', 'grad'});
-  
-elseif istrue(cfg.keepleadfield) || istrue(cfg.permutation) || istrue(cfg.randomization) || istrue(cfg.bootstrap) || istrue(cfg.jackknife) || istrue(cfg.pseudovalue) || istrue(cfg.singletrial) || istrue(cfg.rawtrial)
-  ft_notice('computing the leadfields in advance');
-  
-  % collect and preprocess the electrodes/gradiometer and head model
-  [headmodel, sens, cfg] = prepare_headmodel(cfg, data);
-  
-  % construct the dipole positions on which the source reconstruction will be done
-  tmpcfg           = keepfields(cfg, {'sourcemodel', 'mri', 'headshape', 'symmetry', 'smooth', 'threshold', 'spheremesh', 'inwardshift', 'xgrid' 'ygrid', 'zgrid', 'resolution', 'tight', 'warpmni', 'template', 'showcallinfo'});
-  tmpcfg.headmodel = headmodel;
+% set the default for reducing the rank of the leadfields
+if isempty(cfg.(cfg.method).reducerank)
   if ft_senstype(sens, 'eeg')
-    tmpcfg.elec = sens;
+    cfg.(cfg.method).reducerank = 'no';    % for EEG
+  elseif ft_senstype(sens, 'meg') && ft_voltype(headmodel, 'infinite')
+    cfg.(cfg.method).reducerank = 'no';    % for MEG with a magnetic dipole, e.g. a HPI coil
   elseif ft_senstype(sens, 'meg')
-    tmpcfg.grad = sens;
+    cfg.(cfg.method).reducerank = 'yes';   % for MEG with a current dipole in a volume conductor
   end
-  sourcemodel = ft_prepare_leadfield(tmpcfg);
-  
-  % no further forward computations are needed, but keep them in the cfg
-  headmodel = [];
-  sens = [];
-  
-else
-  ft_notice('computing the leadfields on the fly');
-  
-  % collect and preprocess the electrodes/gradiometer and head model
-  [headmodel, sens, cfg] = prepare_headmodel(cfg, data);
-  
-  % construct the dipole positions on which the source reconstruction will be done
-  tmpcfg           = keepfields(cfg, {'sourcemodel', 'mri', 'headshape', 'symmetry', 'smooth', 'threshold', 'spheremesh', 'inwardshift', 'xgrid' 'ygrid', 'zgrid', 'resolution', 'tight', 'warpmni', 'template', 'showcallinfo'});
-  tmpcfg.headmodel = headmodel;
-  if ft_senstype(sens, 'eeg')
-    tmpcfg.elec = sens;
-  elseif ft_senstype(sens, 'meg')
-    tmpcfg.grad = sens;
-  end
-  sourcemodel = ft_prepare_sourcemodel(tmpcfg);
-  
-end % if precomputed filter, leadfield or not 
+end
 
 % It might be that the number of channels in the data, the number of
 % channels in the electrode/gradiometer definition and the number of
 % channels in the localspheres volume conduction model are different.
 % Hence a subset of the data channels will be used.
 Nchans = length(cfg.channel);
+
+if strcmp(cfg.keepleadfield, 'yes') && (~isfield(cfg, 'grid') || ~isfield(cfg.grid, 'leadfield'))
+  % precompute the leadfields upon the users request
+  fprintf('precomputing leadfields\n');
+  grid = ft_prepare_leadfield(cfg, data);
+elseif (strcmp(cfg.permutation,   'yes') || ...
+    strcmp(cfg.randomization, 'yes') || ...
+    strcmp(cfg.bootstrap,     'yes') || ...
+    strcmp(cfg.jackknife,      'yes') || ...
+    strcmp(cfg.pseudovalue,   'yes') || ...
+    strcmp(cfg.singletrial,   'yes') || ...
+    strcmp(cfg.rawtrial,      'yes')) && (~isfield(cfg, 'grid') || ~isfield(cfg.grid, 'leadfield'))
+  % also precompute the leadfields if multiple trials have to be processed
+  fprintf('precomputing leadfields for efficient handling of multiple trials\n');
+  grid = ft_prepare_leadfield(cfg, data);
+else
+  % only prepare the dipole grid positions, the leadfield will be computed on the fly if not present
+  
+  % copy all options that are potentially used in ft_prepare_sourcemodel
+  tmpcfg           = keepfields(cfg, {'grid' 'mri' 'headshape' 'symmetry' 'smooth' 'threshold' 'spheremesh' 'inwardshift', 'showcallinfo'});
+  tmpcfg.headmodel = headmodel;
+  tmpcfg.grad      = sens; % this can be electrodes or gradiometers
+  grid = ft_prepare_sourcemodel(tmpcfg);
+  
+end
+
+if isfield(cfg.grid, 'filter')
+  if numel(cfg.grid.filter) == size(grid.pos, 1)
+    grid.filter = cfg.grid.filter;
+  else
+    ft_warning('ignoring predefined filter as it does not match the number of source positions');
+  end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % do frequency domain source reconstruction
@@ -489,7 +435,7 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
         refchanindx = [];
       end
       if isfield(cfg, 'supchan') && ~isempty(cfg.supchan)
-        [dum, supchanindx] = match_str(cfg.supchan, tmpcfg.channel);
+        [dum, supchanindx] = match_str(cfg.supchan,tmpcfg.channel);
       else
         supchanindx = [];
       end
@@ -542,9 +488,9 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
       [Cf, Cr, Pr, Ntrials, cfg] = prepare_freq_matrices(cfg, data);
       
       % assign a descriptive name to each of the dics sub-methods, the default is power only
-      if isfield(cfg, 'refdip') && ~isempty(cfg.refdip)
+      if isfield(cfg, 'refdip') && ~isempty(cfg.refdip);
         submethod = 'dics_refdip';
-      elseif isfield(cfg, 'refchan') && ~isempty(cfg.refchan)
+      elseif isfield(cfg, 'refchan') && ~isempty(cfg.refchan);
         submethod = 'dics_refchan';
       else
         submethod = 'dics_power';
@@ -552,6 +498,36 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
       
     otherwise
   end
+  
+  % This is the place to check for the consistency of the channel order in
+  % the pre-computed leadfields/spatial filters, and to correct for it, if
+  % necessary. This pertains to bugs 1746 and 3029.
+  if isfield(grid, 'label') && (isfield(grid, 'leadfield') || isfield(grid, 'filter'))
+    % match the channels in the leadfields/filters with those in the data
+    [i1, i2] = match_str(cfg.channel, grid.label);
+    if ~isequal(i2(:), (1:numel(grid.label))')
+      if isfield(grid, 'leadfield')
+        fprintf('\n\nSubselecting/reordering the channels in the precomputed leadfields\n\n');
+        inside_indx = find(grid.inside);
+        for k = inside_indx(:)'
+          grid.leadfield{k} = grid.leadfield{k}(i2, :);
+        end
+      end
+      if isfield(grid, 'filter')
+        fprintf('\n\nSubselecting/reordering the channels in the precomputed filters\n\n');
+        inside_indx = find(grid.inside);
+        for k = inside_indx(:)'
+          grid.filter{k} = grid.filter{k}(:, i2);
+        end
+      end
+      grid.label = grid.label(i2);
+    end
+    if ~isequal(i1(:), (1:numel(cfg.channel))')
+      % this is not so easy to deal with, throw an error
+      ft_error('There''s a mismatch between the number/order of channels in the data, with respect to the channels in the precomputed leadfield/filter. This is not easy to solve automatically. Please look into this.');
+    end
+  end
+  
   
   % fill these with NaNs, so that I dont have to treat them separately
   if isempty(Cr), Cr = nan(Ntrials, Nchans, 1); end
@@ -574,7 +550,7 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
     cfg.numcondition = 2;
   end
   
-  % prepare the resampling of the trials, or average the data if multiple trials are present and no resampling is necessary
+  % prepare the resampling of the trials, or average the data if multiple trials are present and no resampling is neccessary
   if (Ntrials<=1) && (strcmp(cfg.jackknife, 'yes') || strcmp(cfg.bootstrap, 'yes') || strcmp(cfg.pseudovalue, 'yes') || strcmp(cfg.singletrial, 'yes') || strcmp(cfg.rawtrial, 'yes') || strcmp(cfg.randomization, 'yes') || strcmp(cfg.permutation, 'yes'))
     ft_error('multiple trials required in the data\n');
     
@@ -673,19 +649,12 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
   
   % get the relevant low level options from the cfg and convert into key-value pairs
   tmpcfg = cfg.(cfg.method);
-  % disable console feedback for the low-level function in case of multiple repetitions
+  % disable console feedback for the low-level function in case of multiple
+  % repetitions
   if Nrepetitions > 1
     tmpcfg.feedback = 'none';
   end
-  methodopt = ft_cfg2keyval(tmpcfg);
-  
-  % construct the low-level options for the leadfield computation as key-value pairs, these are passed to FT_COMPUTE_LEADFIELD and DIPOLE_FIT
-  leadfieldopt = {};
-  leadfieldopt = ft_setopt(leadfieldopt, 'reducerank',     ft_getopt(cfg, 'reducerank'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'backproject',    ft_getopt(cfg, 'backproject'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'normalize',      ft_getopt(cfg, 'normalize'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'normalizeparam', ft_getopt(cfg, 'normalizeparam'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'weight',         ft_getopt(cfg, 'weight'));
+  optarg = ft_cfg2keyval(tmpcfg);
   
   if Nrepetitions > 1
     ft_progress('init', cfg.(cfg.method).feedback, 'scanning repetition...');
@@ -693,7 +662,7 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
   
   for i=1:Nrepetitions
     size_Cf    = size(Cf);
-    squeeze_Cf = reshape(Cf(i,:,:), size_Cf(2:end));
+    squeeze_Cf = reshape(Cf(i,:,:), size_Cf(2:end));    
     
     if Nrepetitions > 1
       ft_progress(i/Nrepetitions, 'scanning repetition %d from %d', i, Nrepetitions);
@@ -702,11 +671,11 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
     switch cfg.method
       case 'dics'
         if strcmp(submethod, 'dics_power')
-          dip(i) = beamformer_dics(sourcemodel, sens, headmodel, [],  squeeze_Cf, methodopt{:}, leadfieldopt{:});
+          dip(i) = beamformer_dics(grid, sens, headmodel, [],  squeeze_Cf, optarg{:});
         elseif strcmp(submethod, 'dics_refchan')
-          dip(i) = beamformer_dics(sourcemodel, sens, headmodel, [],  squeeze_Cf, methodopt{:}, leadfieldopt{:}, 'Cr', Cr(i,:), 'Pr', Pr(i));
+          dip(i) = beamformer_dics(grid, sens, headmodel, [],  squeeze_Cf, optarg{:}, 'Cr', Cr(i,:), 'Pr', Pr(i));
         elseif strcmp(submethod, 'dics_refdip')
-          dip(i) = beamformer_dics(sourcemodel, sens, headmodel, [],  squeeze_Cf, methodopt{:}, leadfieldopt{:}, 'refdip', cfg.refdip);
+          dip(i) = beamformer_dics(grid, sens, headmodel, [],  squeeze_Cf, optarg{:}, 'refdip', cfg.refdip);
         end
       case 'pcc'
         if ~isempty(avg) && istrue(cfg.rawtrial)
@@ -715,17 +684,17 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
           % repetition
           ft_error('rawtrial in combination with pcc has been temporarily disabled');
         else
-          dip(i) = beamformer_pcc(sourcemodel, sens, headmodel, avg, squeeze_Cf, methodopt{:}, leadfieldopt{:}, 'refdip', cfg.refdip, 'refchan', refchanindx, 'supdip', cfg.supdip, 'supchan', supchanindx);
+          dip(i) = beamformer_pcc(grid, sens, headmodel, avg, squeeze_Cf, optarg{:}, 'refdip', cfg.refdip, 'refchan', refchanindx, 'supdip', cfg.supdip, 'supchan', supchanindx);
         end
       case 'eloreta'
-        dip(i) = ft_eloreta(sourcemodel, sens, headmodel, avg, squeeze_Cf, methodopt{:}, leadfieldopt{:});
+        dip(i) = ft_eloreta(grid, sens, headmodel, avg, squeeze_Cf, optarg{:});
       case 'mne'
-        dip(i) = minimumnormestimate(sourcemodel, sens, headmodel, avg, methodopt{:}, leadfieldopt{:});
+        dip(i) = minimumnormestimate(grid, sens, headmodel, avg, optarg{:});
       case 'harmony'
-        dip(i) = harmony(sourcemodel, sens, headmodel, avg, methodopt{:}, leadfieldopt{:});
+        dip(i) = harmony(grid, sens, headmodel, avg, optarg{:});
         % ft_error(sprintf('method ''%s'' is unsupported for source reconstruction in the frequency domain', cfg.method));
       case {'rv'}
-        dip(i) = residualvariance(sourcemodel, sens, headmodel, avg, methodopt{:}, leadfieldopt{:}) ;
+        dip(i) = residualvariance(grid, sens, headmodel, avg, optarg{:}) ;
       case {'music'}
         ft_error('method ''%s'' is currently unsupported for source reconstruction in the frequency domain', cfg.method);
       otherwise
@@ -742,7 +711,7 @@ if isfreq && any(strcmp(cfg.method, {'dics', 'pcc', 'eloreta', 'mne','harmony', 
 elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv', 'music', 'pcc', 'mvl', 'sloreta', 'eloreta'}))
   
   % determine the size of the data
-  Nsamples = length(data.time);
+  Nsamples = size(data.avg,2);
   Nchans   = length(data.label);
   if isfield(data, 'cov') && length(size(data.cov))==3
     Ntrials = size(data.cov,1);
@@ -754,7 +723,7 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
   
   if isfield(data, 'cov')
     % use the estimated data covariance matrix
-    hascovariance = true;
+    hascovariance = 1;
   else
     % add a identity covariance matrix, this simplifies the handling of the different source reconstruction methods
     % since the covariance is only used by some reconstruction methods and might not always be present in the data
@@ -766,8 +735,8 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
         data.cov(i,:,:) = eye(Nchans);
       end
     end
-    hascovariance = false;
-    ft_warning('No covariance matrix found, assuming identity covariance matrix');
+    hascovariance = 0;
+    ft_warning('No covariance matrix found - will assume identity covariance matrix (mininum-norm solution)');
   end
   
   if strcmp(cfg.method, 'pcc')
@@ -795,6 +764,7 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       data.avg = data.avg(datchanindx,:);
       data.cov = data.cov(datchanindx,datchanindx);
     else
+      data.avg   = data.avg(datchanindx,:);
       data.cov   = data.cov(:,datchanindx,datchanindx);
       data.trial = data.trial(:,datchanindx,:);
     end
@@ -823,11 +793,10 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       data.avg = data.avg(datchanindx,:);
       %data.cov = reshape(data.cov, length(datchanindx), length(datchanindx));
       data.cov = data.cov(datchanindx,datchanindx);
-    elseif strcmp(data.dimord, 'rpt_chan_time')
+    else
+      data.avg   = data.avg(datchanindx,:);
       data.cov   = data.cov(:,datchanindx,datchanindx);
       data.trial = data.trial(:,datchanindx,:);
-    else
-      ft_error('unexpected dimord');
     end
     data.label = data.label(datchanindx);
     Nchans     = length(data.label);
@@ -844,7 +813,7 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
     cfg2.numcondition = 2;
   end
   
-  % prepare the resampling of the trials, or average the data if multiple trials are present and no resampling is necessary
+  % prepare the resampling of the trials, or average the data if multiple trials are present and no resampling is neccessary
   if (strcmp(cfg.jackknife, 'yes') || strcmp(cfg.bootstrap, 'yes') || strcmp(cfg.pseudovalue, 'yes') || strcmp(cfg.singletrial, 'yes') || strcmp(cfg.rawtrial, 'yes') || strcmp(cfg.randomization, 'yes')) && ~strcmp(data.dimord, 'rpt_chan_time')
     ft_error('multiple trials required in the data\n');
     
@@ -921,8 +890,8 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
   elseif Ntrials>1
     % average the single-trial covariance matrices
     Cy  = reshape(mean(data.cov,1), [Nchans Nchans]);
-    % compute the average ERF
-    avg = shiftdim(mean(data.trial,1),1);
+    % select the average ERF
+    avg = data.avg;
     Nrepetitions = 1;
     
   elseif Ntrials==1
@@ -940,29 +909,45 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
   end
   
   % get the relevant low level options from the cfg and convert into key-value pairs
-  tmpcfg = cfg.(cfg.method);
-  % disable console feedback for the low-level function in case of multiple repetitions
-  if Nrepetitions > 1
-    tmpcfg.feedback = 'none';
-  end
-  methodopt = ft_cfg2keyval(tmpcfg);
+  optarg = ft_cfg2keyval(getfield(cfg, cfg.method));
   
-  % construct the low-level options for the leadfield computation as key-value pairs, these are passed to FT_COMPUTE_LEADFIELD and DIPOLE_FIT
-  leadfieldopt = {};
-  leadfieldopt = ft_setopt(leadfieldopt, 'reducerank',     ft_getopt(cfg, 'reducerank'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'backproject',    ft_getopt(cfg, 'backproject'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'normalize',      ft_getopt(cfg, 'normalize'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'normalizeparam', ft_getopt(cfg, 'normalizeparam'));
-  leadfieldopt = ft_setopt(leadfieldopt, 'weight',         ft_getopt(cfg, 'weight'));
+  % This is the place to check for the consistency of the channel order in
+  % the pre-computed leadfields/spatial filters, and to correct for it, if
+  % necessary. This pertains to bugs 1746 and 3029.
+  if isfield(grid, 'label') && (isfield(grid, 'leadfield') || isfield(grid, 'filter'))
+    % match the channels in the leadfields/filters with those in the data
+    [i1, i2] = match_str(cfg.channel, grid.label);
+    if ~isequal(i2(:), (1:numel(grid.label))')
+      if isfield(grid, 'leadfield')
+        fprintf('\n\nSubselecting/reordering the channels in the precomputed leadfields\n\n');
+        inside_indx = find(grid.inside);
+        for k = inside_indx(:)'
+          grid.leadfield{k} = grid.leadfield{k}(i2, :);
+        end
+      end
+      if isfield(grid, 'filter')
+        fprintf('\n\nSubselecting/reordering the channels in the precomputed filters\n\n');
+        inside_indx = find(grid.inside);
+        for k = inside_indx(:)'
+          grid.filter{k} = grid.filter{k}(:, i2);
+        end
+      end
+      grid.label = grid.label(i2);
+    end
+    if ~isequal(i1(:), (1:numel(cfg.channel))')
+      % this is not so easy to deal with, throw an error
+      ft_error('There''s a mismatch between the number/order of channels in the data, with respect to the channels in the precomputed leadfield/filter. This is not easy to solve automatically. Please look into this.');
+    end
+  end
   
   size_avg = [size(avg) 1];
   size_Cy  = [size(Cy) 1];
-  if strcmp(cfg.method, 'lcmv')% && ~isfield(sourcemodel, 'filter')
+  if strcmp(cfg.method, 'lcmv')% && ~isfield(grid, 'filter')
     for i = 1:Nrepetitions
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
       fprintf('scanning repetition %d\n', i);
-      dip(i) = beamformer_lcmv(sourcemodel, sens, headmodel, squeeze_avg, squeeze_Cy, methodopt{:}, leadfieldopt{:});
+      dip(i) = beamformer_lcmv(grid, sens, headmodel, squeeze_avg, squeeze_Cy, optarg{:});
     end
     
     % the following has been disabled since it turns out to be wrong (see
@@ -971,7 +956,7 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
     %     %don't loop over repetitions (slow), but reshape the input data to obtain single trial timecourses efficiently
     %     %in the presence of filters pre-computed on the average (or whatever)
     %     tmpdat = reshape(permute(avg,[2 3 1]),[size_avg(2) size_avg(3)*size_avg(1)]);
-    %     tmpdip = beamformer_lcmv(sourcemodel, sens, headmodel, tmpdat, squeeze(mean(Cy,1)), methodopt{:}, leadfieldopt{:});
+    %     tmpdip = beamformer_lcmv(grid, sens, headmodel, tmpdat, squeeze(mean(Cy,1)), optarg{:});
     %     tmpmom = tmpdip.mom{tmpdip.inside(1)};
     %     sizmom = size(tmpmom);
     %
@@ -1020,7 +1005,7 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
       fprintf('scanning repetition %d\n', i);
-      dip(i) = ft_sloreta(sourcemodel, sens, headmodel, squeeze_avg, squeeze_Cy, methodopt{:}, leadfieldopt{:});
+      dip(i) = ft_sloreta(grid, sens, headmodel, squeeze_avg, squeeze_Cy, optarg{:});
     end
     
   elseif strcmp(cfg.method, 'eloreta')
@@ -1028,7 +1013,7 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
       fprintf('scanning repetition %d\n', i);
-      dip(i) = ft_eloreta(sourcemodel, sens, headmodel, squeeze_avg, squeeze_Cy, methodopt{:}, leadfieldopt{:});
+      dip(i) = ft_eloreta(grid, sens, headmodel, squeeze_avg, squeeze_Cy, optarg{:});
     end
   elseif strcmp(cfg.method, 'sam')
     for i=1:Nrepetitions
@@ -1036,14 +1021,15 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
       fprintf('scanning repetition %d\n', i);
       squeeze_avg=reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
-      dip(i) = beamformer_sam(sourcemodel, sens, headmodel, squeeze_avg, squeeze_Cy, methodopt{:}, leadfieldopt{:});
+      dip(i) = beamformer_sam(grid, sens, headmodel, squeeze_avg, squeeze_Cy, optarg{:});
     end
   elseif strcmp(cfg.method, 'pcc')
     for i=1:Nrepetitions
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
       fprintf('scanning repetition %d\n', i);
-      dip(i) = beamformer_pcc(sourcemodel, sens, headmodel, squeeze_avg, squeeze_Cy, methodopt{:}, leadfieldopt{:}, 'refdip', cfg.refdip, 'refchan', refchanindx, 'supchan', supchanindx);
+      squeeze_avg=reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
+      dip(i) = beamformer_pcc(grid, sens, headmodel, squeeze_avg, squeeze_Cy, optarg{:}, 'refdip', cfg.refdip, 'refchan', refchanindx, 'supchan', supchanindx);
     end
   elseif strcmp(cfg.method, 'mne')
     for i=1:Nrepetitions
@@ -1051,9 +1037,9 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       if hascovariance
         squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
-        dip(i) = minimumnormestimate(sourcemodel, sens, headmodel, squeeze_avg, methodopt{:}, leadfieldopt{:}, 'noisecov', squeeze_Cy);
+        dip(i) = minimumnormestimate(grid, sens, headmodel, squeeze_avg, optarg{:}, 'noisecov', squeeze_Cy);
       else
-        dip(i) = minimumnormestimate(sourcemodel, sens, headmodel, squeeze_avg, methodopt{:}, leadfieldopt{:});
+        dip(i) = minimumnormestimate(grid, sens, headmodel, squeeze_avg, optarg{:});
       end
     end
   elseif strcmp(cfg.method, 'harmony')
@@ -1062,16 +1048,16 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       if hascovariance
         squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
-        dip(i) = harmony(sourcemodel, sens, headmodel, squeeze_avg, methodopt{:}, leadfieldopt{:}, 'noisecov', squeeze_Cy);
+        dip(i) = harmony(grid, sens, headmodel, squeeze_avg, optarg{:}, 'noisecov', squeeze_Cy);
       else
-        dip(i) = harmony(sourcemodel, sens, headmodel, squeeze_avg, methodopt{:}, leadfieldopt{:});
+        dip(i) = harmony(grid, sens, headmodel, squeeze_avg, optarg{:});
       end
     end
   elseif strcmp(cfg.method, 'rv')
     for i=1:Nrepetitions
-      fprintf('estimating residual variance at each source position for repetition %d\n', i);
+      fprintf('estimating residual variance at each grid point for repetition %d\n', i);
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
-      dip(i) = residualvariance(sourcemodel, sens, headmodel, squeeze_avg,      methodopt{:}, leadfieldopt{:});
+      dip(i) = residualvariance(grid, sens, headmodel, squeeze_avg,      optarg{:});
     end
   elseif strcmp(cfg.method, 'music')
     for i=1:Nrepetitions
@@ -1079,55 +1065,63 @@ elseif istimelock && any(strcmp(cfg.method, {'lcmv', 'sam', 'mne','harmony', 'rv
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
       if hascovariance
         squeeze_Cy  = reshape(Cy(i,:,:), [size_Cy(2)  size_Cy(3)]);
-        dip(i) = music(sourcemodel, sens, headmodel, squeeze_avg, 'cov', squeeze_Cy, methodopt{:}, leadfieldopt{:});
+        dip(i) = music(grid, sens, headmodel, squeeze_avg, 'cov', squeeze_Cy, optarg{:});
       else
-        dip(i) = music(sourcemodel, sens, headmodel, squeeze_avg,                    methodopt{:}, leadfieldopt{:});
+        dip(i) = music(grid, sens, headmodel, squeeze_avg,                    optarg{:});
       end
     end
   elseif strcmp(cfg.method, 'mvl')
     for i=1:Nrepetitions
       fprintf('estimating current density distribution for repetition %d\n', i);
       fns = fieldnames(cfg);
-      methodopt = cell(1,length(fns));
+      optarg = cell(1,length(fns));
       n=1;
       for c=1:length(fns)
-        methodopt{n} = fns{c};
-        methodopt{n+1} = cfg.(fns{c});
+        optarg{n} = fns{c};
+        optarg{n+1} = cfg.(fns{c});
         n=n+2;
       end
       squeeze_avg = reshape(avg(i,:,:),[size_avg(2) size_avg(3)]);
-      dip(i) = mvlestimate(sourcemodel, sens, headmodel, squeeze_avg, methodopt{:}, leadfieldopt{:});
+      dip(i) = mvlestimate(grid, sens, headmodel, squeeze_avg, optarg{:});
     end
   else
     ft_error('method ''%s'' is unsupported for source reconstruction in the time domain', cfg.method);
   end
   
+elseif iscomp
+  ft_error('the use of component data in ft_sourceanalysis is disabled for the time being: if you encounter this error message and you need this functionality please contact the FieldTrip development team');
 else
-  ft_error('the specified method ''%s'' combined with the input data of type ''%s'' is not supported', cfg.method, ft_datatype(data));
+  ft_error('the specified method ''%s'' combined with the input data of type ''%s'' are not supported', cfg.method, ft_datatype(data));
 end % if freq or timelock or comp data
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % clean up and collect the results
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-source = copyfields(sourcemodel, source, {'pos', 'tri', 'dim', 'inside', 'leadfield', 'leadfielddimord', 'label', 'cfg'});
+if isfield(grid, 'dim')
+  % the source reconstruction was perfomed on a regular 3d volume, remember the dimensions of the volume
+  source.dim = grid.dim;
+end
+
+if isfield(grid, 'tri')
+  % the source reconstruction was perfomed on a tesselated cortical sheet, remember the triangles
+  source.tri = grid.tri;
+end
+
+if exist('grid', 'var')
+  source = copyfields(grid, source, {'pos', 'inside', 'leadfield', 'leadfielddimord', 'label'});%, 'filter'});
+end
 
 if exist('dip', 'var')
-  % the fields in the dip structure might be more recent than those in the sourcemodel structure
-  source = copyfields(dip, source, {'pos', 'tri', 'dim', 'inside', 'leadfield', 'leadfielddimord', 'label', 'cfg'});
+  % the fields in the dip structure might be more recent than those in the grid structure
+  source = copyfields(dip, source, {'pos', 'inside', 'leadfield', 'leadfielddimord', 'label'});%, 'filter'});
   
   % prevent duplication of these fields when copying the content of dip into source.avg or source.trial
-  dip    = removefields(dip,       {'pos', 'tri', 'dim', 'inside', 'leadfield', 'leadfielddimord', 'label', 'cfg'});
+  dip    = removefields(dip,       {'pos', 'inside', 'leadfield', 'leadfielddimord', 'label'});%, 'filter'});
   
   if istrue(cfg.(cfg.method).keepfilter) && isfield(dip(1), 'filter')
-    for k=1:numel(dip)
-      if isfield(sourcemodel, 'label')
-        % pre-computed leadfields or filters were used
-        dip(k).label = sourcemodel.label;
-      else
-        % leadfields and filters were computed on the fly
-        dip(k).label = sens.label;
-      end
+    for k = 1:numel(dip)
+      dip(k).label        = sens.label;
       dip(k).filterdimord = '{pos}_ori_chan';
     end
   end
@@ -1138,11 +1132,9 @@ if ~istrue(cfg.keepleadfield)
   source = removefields(source, {'leadfield' 'leadfielddimord' 'label'});
 end
 
-cfg.headmodel = headmodel;
-
-% remove the precomputed leadfields from the cfg, regardless of what keepleadfield is saying
+% remove the precomputed leadfields from the cfg regardless of what keepleadfield is saying
 % it should not be kept in cfg, since there it takes up too much space
-cfg.sourcemodel = removefields(sourcemodel, {'leadfield' 'leadfielddimord' 'filter' 'filterdimord' 'label'});
+cfg.grid = removefields(cfg.grid, {'leadfield' 'leadfielddimord' 'filter' 'filterdimord' 'label'});
 
 if strcmp(cfg.jackknife, 'yes')
   source.method = 'jackknife';

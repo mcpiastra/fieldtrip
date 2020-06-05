@@ -4,8 +4,13 @@
 
 function [data, hdr] = read_ctf_svl(filename)
   
-  fid = fopen_or_error(filename, 'rb', 'ieee-be', 'ISO-8859-1');
+  fid = fopen(filename, 'rb', 'ieee-be', 'ISO-8859-1');
   
+  if fid <= 0
+    ft_error('Could not open SAM file: %s\n', filename);
+  end
+  
+
   % ----------------------------------------------------------------------
   % Read header.
   hdr.identity = fread(fid, 8, '*char')'; % 'SAMIMAGE'

@@ -45,32 +45,34 @@ function ft_preamble(cmd, varargin)
 %#function ft_preamble_loadvar
 %#function ft_preamble_randomseed
 
-% this is a trick to pass the input arguments into the ft_preamble_xxx script
-assignin('caller', 'iW1aenge_preamble', varargin);
+global ft_default
 
-full_cmd = ['ft_preamble_' cmd];
-cmd_exists = false;
+% this is a trick to pass the input arguments into the ft_preamble_xxx script
+ft_default.preamble = varargin;
+
+full_cmd=['ft_preamble_' cmd];
+cmd_exists=false;
 
 if exist(full_cmd, 'file')
   % Matlab can find commands in a private subdirectory; Octave cannot.
   % If pwd is already the private directory, or if using Matlab then
   % the command can be evaluated directly
   cmd_exists = true;
-  
+
 elseif ~ft_platform_supports('exists-in-private-directory')
   % Octave does not find files by name in a private directory, so the full
   % filename must be specified.
   private_dir=fullfile(fileparts(which(mfilename)),'private');
   full_path=fullfile(private_dir,[full_cmd '.m']);
-  
+
   cmd_exists=exist(full_path,'file');
-  full_cmd_parts = {'ft_tmp_orig_pwd=pwd();',...
-    'ft_tmp_orig_pwd_cleaner='...
-    'onCleanup(@()cd(ft_tmp_orig_pwd));',...
-    sprintf('cd(''%s'');',private_dir),...
-    [full_cmd ';'],...
-    'clear ft_tmp_orig_pwd_cleaner;'};
-  full_cmd = sprintf('%s',full_cmd_parts{:});
+  full_cmd_parts={'ft_tmp_orig_pwd=pwd();',...
+                  'ft_tmp_orig_pwd_cleaner='...
+                                'onCleanup(@()cd(ft_tmp_orig_pwd));',...
+                  sprintf('cd(''%s'');',private_dir),...
+                  [full_cmd ';'],...
+                  'clear ft_tmp_orig_pwd_cleaner;'};
+  full_cmd=sprintf('%s',full_cmd_parts{:});
 end
 
 if ~cmd_exists
@@ -82,3 +84,7 @@ end
 
 evalin('caller', full_cmd);
 
+if isfield(ft_default, 'preamble')
+  % the preamble field should not remain in the ft_default structure
+  ft_default = rmfield(ft_default, 'preamble');
+end

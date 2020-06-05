@@ -5,279 +5,140 @@ function ignore = ignorefields(purpose)
 % size-checking, etc.
 
 switch purpose
-
+  
   case 'appendtimelock'
     ignore = {
       'cfg'
-      'dimord'
-      'elec'
-      'fsample'
-      'grad'
       'label'
-      'negclusters'
-      'negdistribution'
-      'opto'
-      'posclusters'
-      'posdistribution'
-      'sampleinfo' % this is dealt with explicitly
       'time'
-      'topo'
-      'topodimord'
-      'topolabel'
+      'dimord'
+      'grad'
+      'elec'
+      'opto'
       'trialinfo'  % this is dealt with explicitly
-      'unmixing'
-      'unmixingdimord'
-      'brainordinate'
+      'sampleinfo' % this is dealt with explicitly
       };
-
+    
   case 'appendfreq'
     ignore = {
       'cfg'
+      'label'
+      'time'
+      'freq'
+      'dimord'
+      'grad'
+      'elec'
+      'opto'
+      'trialinfo'  % this is dealt with explicitly
+      'sampleinfo' % this is dealt with explicitly
       'cumsumcnt'  % this is dealt with explicitly
       'cumtapcnt'  % this is dealt with explicitly
-      'dimord'
-      'elec'
-      'freq'
-      'grad'
-      'label'
-      'negclusters'
-      'negdistribution'
-      'opto'
-      'posclusters'
-      'posdistribution'
-      'sampleinfo' % this is dealt with explicitly
-      'time'
-      'trialinfo'  % this is dealt with explicitly
       };
-
+    
   case 'deface'
     ignore = {
       % some fields should be dealt with explicitly
-      'dim'
-      'hex'
       'pos'
-      'tet'
-      'transform'
       'tri'
+      'tet'
+      'hex'
+      'dim'
+      'transform'
       % some fields are irrelevant
-      'cfg'
+      'unit'
       'coordsys'
       'fid'
-      'unit'
+      'cfg'
       };
-
+    
   case 'pipeline'
     ignore = {
       % some fields that are always allowed to be present in the configuration
-      'cfg'
-      'inside'
       'leadfield'
+      'inside'
+      'cfg'
       'previous'
       };
-
+    
   case 'allowed'
     ignore = {
       % some fields that are always allowed to be present in the configuration
-      'callinfo'
+      'postamble'
+      'trackconfig'
       'checkconfig'
-      'checkpath'
       'checksize'
-      'debug'
+      'trackusage'
+      'trackdatainfo'
+      'trackcallinfo'
+      'showcallinfo'
+      'callinfo'
+      'version'
+      'warning'
       'notification'
-      'outputfilepresent'
+      'debug'
       'previous'
       'progress'
-      'showcallinfo'
-      'spmversion'
+      'outputfilepresent'
       'toolbox'
-      'trackcallinfo'
-      'trackconfig'
-      'trackdatainfo'
-      'trackusage'
-      'version'
-      'warning'
       };
-
-  case {'rollback'}
-    ignore = {
-      % these should not be updated in rollback_provenance
-      'callinfo'
-      'checkconfig'
-      'checksize'
-      'debug'
-      'notification'
-      'previous'
-      'showcallinfo'
-      'trackcallinfo'
-      'trackconfig'
-      'trackdatainfo'
-      'trackusage'
-      'version'
-      'warning'
-      };
-
+    
+    
   case {'provenance', 'history'}
     ignore = {
       % these should not be included in the provenance or history
+      'postamble'
       'checkconfig'
       'checksize'
-      'debug'
-      'notification'
-      'reproducescript'
-      'showcallinfo'
-      'trackcallinfo'
       'trackconfig'
-      'trackdatainfo'
       'trackusage'
+      'trackdatainfo'
+      'trackcallinfo'
+      'showcallinfo'
       'warning'
-      };
-
-  case {'reproducescript'}
-    ignore = {
-      % these should not be included in the output script
-      'callinfo'
-      'checkconfig'
-      'checkpath'
-      'checksize'
-      'debug'
       'notification'
-      'outputfilepresent'
+      'debug'
       'progress'
-      'reproducescript'
-      'showcallinfo'
-      'toolbox'
-      'trackcallinfo'
-      'trackconfig'
-      'trackdatainfo'
-      'trackusage'
-      'version'
-      'warning'
-      'event'
       };
-
+    
+    
   case 'trackconfig'
     ignore = {
       % these fields from the user should be ignored
-      'artfctdef'
-      'artifact'
       'checksize'
-      'event'
       'trl'
       'trlold'
+      'event'
+      'artifact'
+      'artfctdef'
       % these fields are for internal usage only
-      'callinfo'
+      'postamble'
       'checkconfig'
       'checksize'
-      'debug'
-      'hastoolbox'
-      'notification'
-      'previous'
-      'showcallinfo'
-      'trackcallinfo'
       'trackconfig'
-      'trackdatainfo'
       'trackusage'
+      'trackdatainfo'
+      'trackcallinfo'
+      'showcallinfo'
+      'callinfo'
       'version'
       'warning'
+      'notification'
+      'debug'
+      'previous'
       };
-
+    
   case 'checksize'
     ignore = {
       % the size of these fields should not be checked
-      'artfctdef'
-      'artifact'
       'checksize'
-      'event'
-      'hastoolbox'
-      'previous'
       'trl'
       'trlold'
-      };
-
-  case 'makessense'
-    ignore = {
-      % these fields should not be used to check whether the trialinfo and sampleinfo make sense
-      'cfg'
-      'dimord'
-      'elec'
-      'freq'
-      'fsample'
-      'grad'
-      'hdr'
-      'label'
-      'negclusters'
-      'negdistribution'
-      'opto'
-      'posclusters'
-      'posdistribution'
-      'sampleinfo'
-      'time'
-      'trialinfo'
-      'brainordinate'
-      };
-
-  case 'html'
-    ignore = {
-      % when generating a html-formatted pipeline, ignore data-like fields and fields that probably were not added by the user himself
-      'checkconfig'
-      'checksize'
-      'debug'
       'event'
-      'headmodel'
-      'outputfilepresent'
+      'artifact'
+      'artfctdef'
       'previous'
-      'progress'
-      'showcallinfo'
-      'sourcemodel'
-      'trackcallinfo'
-      'trackconfig'
-      'trackdatainfo'
-      'trackusage'
-      'warning'
       };
-
-  case 'selectdata'
-    ignore = {
-      % these fields do not contain data and should be excluded
-      'cfg'
-      'coordsys'
-      'dim'
-      'elec'
-      'fsample'
-      'fsampleorig'
-      'grad'
-      'hdr'
-      'negclusters'
-      'negdistribution'
-      'opto'
-      'posclusters'
-      'posdistribution'
-      'topolabel'
-      'transform'
-      'unit'
-      'brainordinate'
-      };
-
-  case 'recursesize'
-    ignore = {
-      % these fields should not recursively be checked on their size
-      'elec'
-      'event'
-      'grad'
-      'grid'
-      'headmodel'
-      'headshape'
-      'layout'
-      'matrix'
-      'mri'
-      'neighbours'
-      'opto'
-      'sourcemodel'
-      'vol'
-      'trl'
-      };
-
+    
   otherwise
     ft_error('invalid purpose');
 end % switch purpose
-

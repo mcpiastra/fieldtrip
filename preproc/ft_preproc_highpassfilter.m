@@ -24,7 +24,6 @@ function [filt, B, A] = ft_preproc_highpassfilter(dat,Fs,Fhp,N,type,dir,instabil
 %                'twopass-reverse' zero-phase reverse and forward filter
 %                'twopass-average' average of the twopass and the twopass-reverse
 %                'onepass-zerophase' zero-phase forward filter with delay compensation (default for firws, linear-phase symmetric FIR only)
-%                'onepass-reverse-zerophase' zero-phase reverse filter with delay compensation
 %                'onepass-minphase' minimum-phase converted forward filter (non-linear!, firws only)
 %   instabilityfix optional method to deal with filter instabilities
 %                'no'       only detect and give error (default)
@@ -213,15 +212,14 @@ switch type
     end
     
     % Reporting
-    ft_info once
-    ft_info('Highpass filtering data: %s, order %d, %s-windowed sinc FIR\n', dir, order, wintype);
+    print_once(sprintf('Highpass filtering data: %s, order %d, %s-windowed sinc FIR\n', dir, order, wintype));
     if ~isTwopass && ~isOrderLow % Do not report shifted cutoffs
-      ft_info('  cutoff (-6 dB) %g Hz\n', Fhp);
+      print_once(sprintf('  cutoff (-6 dB) %g Hz\n', Fhp));
       tb = [max([Fhp - df / 2 0]), min([Fhp + df / 2 Fn])]; % Transition band edges
-      ft_info('  transition width %.1f Hz, stopband 0-%.1f Hz, passband %.1f-%.0f Hz\n', df, tb, Fn);
+      print_once(sprintf('  transition width %.1f Hz, stopband 0-%.1f Hz, passband %.1f-%.0f Hz\n', df, tb, Fn));
     end
     if ~isOrderLow
-      ft_info('  max. passband deviation %.4f (%.2f%%), stopband attenuation %.0f dB\n', pbDev, pbDev * 100, sbAtt);
+      print_once(sprintf('  max. passband deviation %.4f (%.2f%%), stopband attenuation %.0f dB\n', pbDev, pbDev * 100, sbAtt));
     end
 
     % Plot filter responses
@@ -287,19 +285,20 @@ catch
     case 'no'
       rethrow(lasterror);
     case 'reduce'
-      ft_warning('off','backtrace');
+      ft_warning('backtrace', 'off')
       ft_warning('filter instability detected - reducing the %dth order filter to an %dth order filter', N, N-1);
-      ft_warning('on','backtrace');
+      ft_warning('backtrace', 'on')
       filt = ft_preproc_highpassfilter(dat,Fs,Fhp,N-1,type,dir,instabilityfix);
     case 'split'
       N1 = ceil(N/2);
       N2 = floor(N/2);
-      ft_warning('off','backtrace');
+      ft_warning('backtrace', 'off')
       ft_warning('filter instability detected - splitting the %dth order filter in a sequential %dth and a %dth order filter', N, N1, N2);
-      ft_warning('on','backtrace');
+      ft_warning('backtrace', 'on')
       filt = ft_preproc_highpassfilter(dat ,Fs,Fhp,N1,type,dir,instabilityfix);
       filt = ft_preproc_highpassfilter(filt,Fs,Fhp,N2,type,dir,instabilityfix);
     otherwise
       ft_error('incorrect specification of instabilityfix');
   end % switch
 end
+

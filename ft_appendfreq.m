@@ -68,6 +68,7 @@ end
 
 % check if the input data is valid for this function
 for i=1:length(varargin)
+  % FIXME: what about freq+comp?
   varargin{i} = ft_checkdata(varargin{i}, 'datatype', {'freq', 'freq+comp'}, 'feedback', 'yes');
 end
 
@@ -106,7 +107,7 @@ if isempty(cfg.appenddim) || strcmp(cfg.appenddim, 'auto')
     end
   end
 end
-ft_info('concatenating over the "%s" dimension\n', cfg.appenddim);
+fprintf('concatenating over the "%s" dimension\n', cfg.appenddim);
 
 if isempty(cfg.parameter)
   fn = fieldnames(varargin{1});

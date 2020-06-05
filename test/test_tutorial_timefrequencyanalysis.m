@@ -1,9 +1,9 @@
 function test_tutorial_timefrequencyanalysis(datadir)
 
-% MEM 2gb
+% MEM 2000mb
 % WALLTIME 00:20:00
 
-% DEPENDENCY ft_freqanalysis ft_preprocessing ft_multiplotTFR ft_singleplotTFR
+% TEST ft_freqanalysis ft_preprocessing ft_multiplotTFR ft_singleplotTFR
 
 if nargin==0
   datadir = dccnpath('/home/common/matlab/fieldtrip/data/ftp/tutorial/timefrequencyanalysis');

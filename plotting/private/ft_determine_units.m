@@ -9,22 +9,16 @@ function [obj] = ft_determine_units(obj)
 %   from 50.000 to 500.000 -> millimeter
 %
 % Use as
-%   [output] = ft_determine_units(input)
+%   dataout = ft_determine_units(datain)
+% where the input obj structure can be
+%  - an anatomical MRI
+%  - an electrode or gradiometer definition
+%  - a volume conduction model of the head
+% or most other FieldTrip structures that represent geometrical information.
 %
-% The following input data structures are supported
-%   electrode or gradiometer array, see FT_DATATYPE_SENS
-%   volume conduction model, see FT_DATATYPE_HEADMODEL
-%   source model, see FT_DATATYPE_SOURCE and FT_PREPARE_SOURCEMODEL
-%   anatomical mri, see FT_DATATYPE_VOLUME
-%   segmented mri, see FT_DATATYPE_SEGMENTATION
-%   anatomical or functional atlas, see FT_READ_ATLAS
-%
-% This function will add the field 'unit' to the output data structure with the
-% possible values 'm', 'dm', 'cm ' or 'mm'.
-%
-% See also FT_CONVERT_UNITS, FT_DETERMINE_COODSYS, FT_CONVERT_COORDSYS, FT_PLOT_AXES, FT_PLOT_XXX
+% See also FT_CONVERT_UNITS, FT_DETERMINE_COODSYS, FT_CONVERT_COORDSYS
 
-% Copyright (C) 2005-2020, Robert Oostenveld
+% Copyright (C) 2005-2017, Robert Oostenveld
 %
 % This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
@@ -44,6 +38,9 @@ function [obj] = ft_determine_units(obj)
 %
 % $Id$
 
+% ensure the correct number of input and output arguments
+narginchk(1,1);
+nargoutchk(0,1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -55,7 +52,7 @@ if isstruct(obj) && numel(obj)>1
   obj = tmp;
   return
 elseif iscell(obj) && numel(obj)>1
-  % deal with a cell-array
+  % deal with a cell array
   % this might represent combined EEG, ECoG and/or MEG
   for i=1:numel(obj)
     obj{i} = ft_determine_units(obj{i});
@@ -120,19 +117,19 @@ else
     siz = norm(idrange(obj.fid.pos));
     unit = ft_estimate_units(siz);
     
-  elseif ft_headmodeltype(obj, 'infinite')
+  elseif ft_voltype(obj, 'infinite')
     % this is an infinite medium volume conductor, which does not care about units
     unit = 'm';
     
-  elseif ft_headmodeltype(obj,'singlesphere')
+  elseif ft_voltype(obj,'singlesphere')
     siz = obj.r;
     unit = ft_estimate_units(siz);
     
-  elseif ft_headmodeltype(obj,'localspheres')
+  elseif ft_voltype(obj,'localspheres')
     siz = median(obj.r);
     unit = ft_estimate_units(siz);
     
-  elseif ft_headmodeltype(obj,'concentricspheres')
+  elseif ft_voltype(obj,'concentricspheres')
     siz = max(obj.r);
     unit = ft_estimate_units(siz);
     

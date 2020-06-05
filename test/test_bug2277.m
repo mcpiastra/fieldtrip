@@ -1,9 +1,9 @@
 function test_bug2277
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_preprocessing ft_preproc_padding preproc
+% TEST ft_preprocessing ft_preproc_padding preproc
 
 ntime = 50;
 nfreq = 30;

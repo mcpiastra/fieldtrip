@@ -1,8 +1,10 @@
 function test_bug1245
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
-% DEPENDENCY ft_multiplotER
+
+% TEST test_bug_1245
+% TEST ft_multiplotER
 
 % The issue: when inputting data where the corresponding layout consists of
 % more channels than the to-be-plotted channels (specified in cfg.channel),
@@ -13,28 +15,20 @@ function test_bug1245
 
 cd(dccnpath('/home/common/matlab/fieldtrip/data/test'))
 
-%%
 % this is one way of having ft_multiplotER select avg as the parameter
-load bug1245.mat data cfg
+load bug1245.mat
 data.avg = [];
 figure
 ft_multiplotER(cfg, data);
 
-%%
 % this is another one way of having ft_multiplotER select avg as the parameter
-try
-  load bug1245.mat data cfg
-  cfg.parameter = 'avg';
-  figure
-  ft_multiplotER(cfg, data);
-catch
-  % this started failing from https://github.com/fieldtrip/fieldtrip/pull/524 onwards
-  % and I don't mind this not working any more
-end
+load bug1245.mat
+cfg.parameter = 'avg';
+figure
+ft_multiplotER(cfg, data);
 
-%%
 % but the data contains a 'trial' field, so better explicitly select that
-load bug1245.mat data cfg
+load bug1245.mat
 cfg.parameter = 'trial';
 figure
 ft_multiplotER(cfg, data);

@@ -1,15 +1,14 @@
 function test_bug1502
 
-% MEM 2gb
+% MEM 1500mb
 % WALLTIME 00:10:00
 
-% DEPENDENCY ft_checkconfig
+% TEST ft_checkconfig
 
 cfg   = [];
 cfg.a = 1;
 cfg.b = 2;
 cfg.c = 3;
-cfg.checkconfig = 'pedantic'; % this field pertains to error handling and is not checked itself
 
 cfg = ft_checkconfig(cfg, 'allowed', {'a', 'b', 'c'});
 

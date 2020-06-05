@@ -13,8 +13,11 @@ datfield  = datfield(:)'; % it should be a row-vector throughout the subsequent 
 
 % these descriptive fields are cell-arrays and not treated as data
 % the descriptive fields such as time and freq can be treated as data
-datfield  = setdiff(datfield, {'label' 'labelcmb'});
-datfield  = setdiff(datfield, ignorefields('selectdata'));
+xtrafield =  {'label' 'labelcmb'};
+datfield  = setdiff(datfield, xtrafield);
+
+xtrafield =  {'cfg' 'hdr' 'fsample' 'fsampleorig' 'grad' 'elec' 'opto' 'transform' 'transformorig' 'dim' 'unit' 'coordsys' 'tri' 'tet' 'hex'};
+datfield  = setdiff(datfield, xtrafield);
 
 % find substructure fields
 structfield = {};
