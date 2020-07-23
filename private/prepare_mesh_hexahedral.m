@@ -209,6 +209,8 @@ elseif shift > 0
   mesh.pos = shift_nodes(mesh.pos, mesh.hex, labels, shift, x_dim, y_dim, z_dim);
 end
 
+mesh.pos = mesh.pos + 0.5; %align mesh to vol
+
 %background = 1;
 % delete background voxels(if desired)
 if(background == 0)
@@ -467,5 +469,4 @@ centroidcomb(tbcsum ~= 0, 3) = centroidcomb(tbcsum ~= 0, 3)./tbcsum(tbcsum ~= 0)
 % finally apply the shift
 nodes(tbcsum == 0, :) = points(tbcsum == 0, :);
 nodes(tbcsum ~= 0, :) = (1-sh)*nodes(tbcsum ~= 0, :) + sh*centroidcomb(tbcsum ~= 0, :);
-
 end % subfunction
